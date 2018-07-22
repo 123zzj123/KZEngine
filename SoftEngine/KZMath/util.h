@@ -13,64 +13,68 @@ namespace KZMath {
 	*/
 
 	//2D向量或点
-	typedef struct VECTOR2D_TYP 
+	typedef struct Vector2DTyp
 	{
 		union
 		{
-			float m[2];
+			float m_[2];
 			struct
 			{
-				float x, y;
+				float x_, y_;
 			};
 		};
-	}KZVector2D, KZPoint2D, *KZVector2D_Ptr, *KZPoint2D_Ptr;
+		//构造函数
+		Vector2DTyp(float x = 0.0f, float y = 0.0f);
+	}KZVector2D, KZPoint2D, *KZVector2DPtr, *KZPoint2DPtr;
 
 	//3D向量(不含w)，或点
-	typedef struct VECTOR3D_TYP
+	typedef struct Vector3DTyp
 	{
 		union
 		{
-			float m[3];
+			float m_[3];
 			struct
 			{
-				float x, y, z;
+				float x_, y_, z_;
 			};
 		};
-	}KZVector3D, KZPoint3D, *KZVector3D_Ptr, *KZPoint3D_Ptr;
+		//构造函数
+		Vector3DTyp(float x = 0.0f, float y = 0.0f, float z = 0.0f);
+	}KZVector3D, KZPoint3D, *KZVector3DPtr, *KZPoint3DPtr;
 
-	typedef struct Line2D_TYP {
+	typedef struct Line2DTyp {
 		//2D线段起点
-		KZPoint2D p0;
+		KZPoint2D p0_;
 		//2D线段终点
-		KZPoint2D p1;
+		KZPoint2D p1_;
 		//2D线段方向向量
-		KZVector2D v;
-	}KZLine2D, *KZLine2D_Ptr;
+		KZVector2D v_;
+	}KZLine2D, *KZLine2DPtr;
 
 	//参数化3D线段
-	typedef struct Line3D_TYP {
+	typedef struct Line3DTyp {
 		//3D线段起点
-		KZPoint3D p0;
+		KZPoint3D p0_;
 		//3D线段终点
-		KZPoint3D p1;
+		KZPoint3D p1_;
 		//3D线段方向向量
-		KZVector3D v;
-	}KZLine3D, *KZLine3D_Ptr;
+		KZVector3D v_;
+	}KZLine3D, *KZLine3DPtr;
 
 	//参数化3D平面
-	typedef struct PlANE3D_TYP
+	typedef struct Plane3DTyp
 	{
 		//平面上的点
-		KZPoint3D p0;
+		KZPoint3D p0_;
 		//平面法线
-		KZVector3D n;
-	}KZPlane3D, *KZPlane3D_Ptr;
+		KZVector3D n_;
+	}KZPlane3D, *KZPlane3DPtr;
 	//2D参数线段相交
-	bool KZLine2DIntersect(KZLine2D_Ptr p1, KZLine2D_Ptr p2, KZPoint2D_Ptr pt);
+	bool KZLine2DIntersect(KZLine2DPtr p1, KZLine2DPtr p2, KZPoint2DPtr pt);
 	//判断点和平面的关系
-	float ComputePoint3DInPLane3D(KZPoint3D_Ptr pt, KZPlane3D_Ptr plane);
+	float ComputePoint3DInPLane3D(KZPoint3DPtr pt, KZPlane3DPtr plane);
 	//3D线段与平面相交
-	bool IntersetLine3DInPlane3D(KZLine3D_Ptr pline, KZPlane3D_Ptr plane, KZPoint3D_Ptr pt);
+	bool IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPoint3DPtr pt);
 	//向量点乘
 	float KZVector3DDot(KZVector3D& v1, KZVector3D& v2);
 }
