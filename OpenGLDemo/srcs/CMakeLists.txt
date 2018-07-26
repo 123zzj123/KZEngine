@@ -8,6 +8,7 @@ set(SRCS
 	glad.c
 	Shader.cpp
 	stb_image.cpp
+	camera.cpp
 	main.cpp
 	MyFShader.fs
 	MyVShader.vs

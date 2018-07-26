@@ -10,4 +10,4 @@ set(SRCS
 	main.cpp
 )
 
-add_executable(KZMath ${SRCS})
+add_library(KZMath ${SRCS})

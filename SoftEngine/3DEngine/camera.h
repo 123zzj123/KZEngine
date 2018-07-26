@@ -24,11 +24,13 @@ namespace KZEngine {
 	{
 	public:
 		//构造函数
-		KZCamera(const KZMath::KZVector4D& pos_in, float fov, float aspect, float near, float far);
+		KZCamera(const KZMath::KZVector4D& pos_in = KZMath::KZVector4D(0, 0, 3), float fov = 45.0f, float aspect = (3.0f/2.0f), float near = 1, float far = 20);
 		//获取相机变换矩阵
 		void GetViewMatrix(KZMath::KZMatrix44& matrix);
 		//获取透视投影矩阵
 		void GetPerspectiveMatrix(KZMath::KZMatrix44& matrix);
+		//获取正交矩阵
+		void GetOrthogonalMatrix(KZMath::KZMatrix44& matrix);
 		//处理键盘输入
 		void ProcessKeyboard(CameraMovement direction, float deltaTime);
 		//处理鼠标移动
@@ -38,7 +40,7 @@ namespace KZEngine {
 	public:
 		//摄像机位置
 		KZMath::KZVector4D pos_;
-		//摄像机注视向量
+		//摄像机方向向量
 		KZMath::KZVector4D n_;
 		//摄像机向上向量
 		KZMath::KZVector4D v_;

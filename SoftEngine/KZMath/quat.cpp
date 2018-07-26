@@ -91,6 +91,14 @@ KZQuat KZQuat::operator*(const KZQuat& other) const{
 	return ans_quat;
 }
 
+//设置函数
+void KZQuat::Set(float w, float x, float y, float z) {
+	w_ = w;
+	x_ = x;
+	y_ = y;
+	z_ = z;
+}
+
 //共轭四元数
 void KZQuat::Conjugate(KZQuat& ans_quat) const {
 	ans_quat.w_ = w_;

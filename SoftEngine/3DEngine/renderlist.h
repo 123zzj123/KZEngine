@@ -14,17 +14,17 @@ namespace KZEngine {
 	{
 	public:
 		//创建或获取单实例
-		KZRenderList* GetInstance() {
-			if (instance_ == nullptr) {
-				instance_ = new KZRenderList();
+		static KZRenderList* GetInstance() {
+			if (r_instance_ == nullptr) {
+				r_instance_ = new KZRenderList();
 			}
-			return instance_;
+			return r_instance_;
 		}
 
 		//删除单实例
 		void DeleteInstance() {
-			if (instance_) {
-				delete instance_;
+			if (r_instance_) {
+				delete r_instance_;
 			}
 		}
 	public:
@@ -35,8 +35,8 @@ namespace KZEngine {
 		//三角形列表
 		vector<Triangle> tri_list_;
 	private:
-		KZRenderList* instance_ = nullptr;
-		KZRenderList();
+		static KZRenderList* r_instance_;
+		KZRenderList() {};
 	};
 }
-#endif // !KZRENDERLIST
+#endif // !KZ_RENDERLIST

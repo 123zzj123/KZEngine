@@ -1,6 +1,7 @@
 #include"object.h"
 using namespace KZEngine;
 
+//物体通过矩阵从模型坐标系转世界坐标系
 void KZObject::TransformModelToWorldMatrix() {
 	KZMath::KZMatrix44 transform;
 	transform.Translation(world_pos_);
@@ -13,6 +14,7 @@ void KZObject::TransformModelToWorldMatrix() {
 	return;
 }
 
+//物体通过数学公式从模型坐标系转世界坐标系
 void KZObject::TransformModelToWorldMath() {
 	Vertex temp_vertex;
 	vlist_tran_.reserve(num_vertices_);
@@ -24,6 +26,7 @@ void KZObject::TransformModelToWorldMath() {
 	return;
 }
 
+//通过矩阵缩放
 void KZObject::ScaleMatrix(const KZMath::KZVector4D& vector) {
 	KZMath::KZMatrix44 transform;
 	transform.Scaling(vector);
@@ -33,6 +36,7 @@ void KZObject::ScaleMatrix(const KZMath::KZVector4D& vector) {
 	return;
 }
 
+//通过数学公式缩放
 void KZObject::ScaleMath(const KZMath::KZVector4D& vector) {
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		vlist_local_[i].pos *= vector;
@@ -40,6 +44,7 @@ void KZObject::ScaleMath(const KZMath::KZVector4D& vector) {
 	return;
 }
 
+//通过矩阵旋转
 void KZObject::RotationMatrix(const KZMath::KZMatrix44& matrix) {
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		vlist_local_[i].pos = matrix * vlist_local_[i].pos;
@@ -50,6 +55,7 @@ void KZObject::RotationMatrix(const KZMath::KZMatrix44& matrix) {
 	return;
 }
 
+//通过四元数旋转
 void KZObject::RotationQuat(const KZMath::KZQuat& quat) {
 	KZMath::KZQuat temp_quat;
 	KZMath::KZQuat quat_conj;
@@ -69,6 +75,7 @@ void KZObject::RotationQuat(const KZMath::KZQuat& quat) {
 	return;
 }
 
+//计算包围球半径
 void KZObject::CalculateRadian() {
 	float max_r = 0.0f;
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
