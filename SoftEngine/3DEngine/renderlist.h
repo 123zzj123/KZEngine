@@ -1,12 +1,14 @@
 #pragma once
-#ifndef KZ_RENDERLIST
-#define KZ_RENDERLIST
+#ifndef RENDERLIST_H
+#define RENDERLIST_H
 #include"object.h"
 
 namespace KZEngine {
 	//三角形结构体
 	typedef struct TriangleType{
 		Vertex vertex_list[3];
+		KZMath::KZVector4D face_normal;
+		uint32_t material = -1;
 	}Triangle, *TrianglePtr;
 
 	//渲染列表
@@ -39,4 +41,4 @@ namespace KZEngine {
 		KZRenderList() {};
 	};
 }
-#endif // !KZ_RENDERLIST
+#endif // !RENDERLIST_H

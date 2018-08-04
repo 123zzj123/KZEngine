@@ -73,16 +73,16 @@ void KZCamera::ProcessKeyboard(CameraMovement direction, float delta_time) {
 	switch (direction)
 	{
 	case CameraMovement::FORWARD:
-		pos_ += n_ * velocity;
+		pos_ += -n_ * velocity;
 		break;
 	case CameraMovement::BACKWARD:
-		pos_ -= n_ * velocity;
+		pos_ -= -n_ * velocity;
 		break;
 	case CameraMovement::LEFT:
-		pos_ -= v_ * velocity;
+		pos_ -= u_ * velocity;
 		break;
 	case CameraMovement::RIGHT:
-		pos_ += v_ * velocity;
+		pos_ += u_ * velocity;
 	default:
 		break;
 	}

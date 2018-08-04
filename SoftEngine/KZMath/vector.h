@@ -16,7 +16,7 @@ namespace KZMath {
 	{
 	public:
 		//构造函数
-		KZVector4D(float x = 0, float y = 0, float z = 0, float w = 1):x_(x),y_(y),z_(z),w_(w){};
+		explicit KZVector4D(float x = 0, float y = 0, float z = 0, float w = 1):x_(x),y_(y),z_(z),w_(w){};
 		//向量加法返回向量
 		KZVector4D operator+ (const KZVector4D& other) const;
 		//向量减法返回向量
@@ -24,9 +24,9 @@ namespace KZMath {
 		//向量与向量点乘
 		float operator* (const KZVector4D& other) const;
 		//向量与标量乘法返回向量
-		KZVector4D operator* (float num);
+		KZVector4D operator* (float num) const;
 		//向量与标量除法返回向量
-		KZVector4D operator/ (float num);
+		KZVector4D operator/ (float num) const;
 		//向量赋值
 		KZVector4D& operator= (const KZVector4D& v1);
 		//返回负的向量

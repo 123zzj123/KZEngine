@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
+add_definitions(-DUNICODE -D_UNICODE)
 project(SoftEngine)
 add_subdirectory(KZMath)
 add_subdirectory(3DEngine)

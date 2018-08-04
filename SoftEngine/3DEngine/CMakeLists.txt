@@ -5,6 +5,9 @@ link_directories("${PROJECT_BINARY_DIR}/KZMath/Debug")
 
 set(SRCS
 	camera.cpp
+	Image.cpp
+	light.cpp
+	material.cpp
 	object.cpp
 	pipeline.cpp
 	renderlist.cpp

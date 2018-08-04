@@ -17,9 +17,10 @@ void KZObject::TransformModelToWorldMatrix() {
 //物体通过数学公式从模型坐标系转世界坐标系
 void KZObject::TransformModelToWorldMath() {
 	Vertex temp_vertex;
+	vector<KZEngine::Vertex>().swap(vlist_tran_);
 	vlist_tran_.reserve(num_vertices_);
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
-		temp_vertex.pos = vlist_local_[i].pos;
+		temp_vertex = vlist_local_[i];
 		temp_vertex.pos += world_pos_;
 		vlist_tran_.push_back(temp_vertex);
 	}
@@ -84,4 +85,36 @@ void KZObject::CalculateRadian() {
 		}
 	}
 	max_radius_ = sqrt(max_r);
+}
+
+//预先计算面法线和顶点法线
+void KZObject::CalculateNormal(bool need_vertex) {
+	uint32_t face_num = num_index_ / 3;
+	face_normal_.reserve(face_num);
+	uint32_t* poly_vertex = new uint32_t[num_vertices_]();
+	for (uint32_t i = 0; i < num_index_; i += 3) {
+		KZMath::KZVector4D vec1 = vlist_local_[index_[i + 1]].pos - vlist_local_[index_[i]].pos;
+		vec1.w_ = 0;
+		KZMath::KZVector4D vec2 = vlist_local_[index_[i + 2]].pos - vlist_local_[index_[i + 1]].pos;
+		vec2.w_ = 0;
+		KZMath::KZVector4D face_normal;
+		vec1.Vector3Cross(face_normal, vec2);
+		face_normal_.push_back(face_normal);
+		if (need_vertex) {
+			vlist_local_[index_[i]].normal += face_normal;
+			vlist_local_[index_[i + 1]].normal += face_normal;
+			vlist_local_[index_[i + 2]].normal += face_normal;
+			++poly_vertex[index_[i]];
+			++poly_vertex[index_[i + 1]];
+			++poly_vertex[index_[i + 2]];
+		}
+	}
+	if (need_vertex) {
+		for (uint32_t i = 0; i < num_vertices_; ++i) {
+			vlist_local_[i].normal /= poly_vertex[i];
+			vlist_local_[i].normal.Vector3Normalize();
+		}
+	}
+	delete[]poly_vertex;
+	return;
 }

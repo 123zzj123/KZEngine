@@ -11,8 +11,8 @@
 #include"stb_image.h"
 using namespace std;
 
-const uint32_t g_width = 480;
-const uint32_t g_height = 320;
+const uint32_t g_width = 800;
+const uint32_t g_height = 600;
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void MouseCallback(GLFWwindow* window, double xpos, double ypos);
@@ -20,7 +20,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 
 // camera
-Camera g_camera(glm::vec3(3.0f, 1.5f, 3.0f));
+Camera g_camera(glm::vec3(0.0f, 1.5f, 3.0f));
 float g_last_x = g_width / 2.0f;
 float g_last_y = g_height / 2.0f;
 bool g_first_mouse = true;

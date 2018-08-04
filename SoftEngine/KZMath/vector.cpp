@@ -44,7 +44,7 @@ float KZVector4D::operator* (const KZVector4D& other) const {
 }
 
 //向量与标量除法返回向量
-KZVector4D KZVector4D::operator/ (float num) {
+KZVector4D KZVector4D::operator/ (float num) const {
 	KZVector4D v;
 	v.x_ = x_ / num;
 	v.y_ = y_ / num;
@@ -53,7 +53,7 @@ KZVector4D KZVector4D::operator/ (float num) {
 }
 
 //向量与标量乘法返回向量
-KZVector4D KZVector4D::operator* (float num) {
+KZVector4D KZVector4D::operator* (float num) const{
 	KZVector4D v;
 	v.x_ = x_ * num;
 	v.y_ = y_ * num;

@@ -1,17 +1,21 @@
 #pragma once
-#ifndef KZ_OBJECT
-#define KZ_OBJECT
+#ifndef OBJECT_H
+#define OBJECT_H
 
 #include"../KZMath/util.h"
 #include"../KZMath/vector.h"
 #include"../KZMath/matrix.h"
 #include"../KZMath/quat.h"
 #include<vector>
+#include"light.h"
 
 namespace KZEngine {
 	//顶点结构体
 	typedef struct VertexType {
 		KZMath::KZVector4D pos;
+		KZMath::KZVector4D normal;
+		KZMath::KZPoint2D uv;
+		Color color;
 	}Vertex, *VertexPtr;
 
 	//物体类
@@ -32,6 +36,8 @@ namespace KZEngine {
 		void RotationQuat(const KZMath::KZQuat& quat);
 		//计算包围球半径
 		void CalculateRadian();
+		//预先计算面法线和顶点法线
+		void CalculateNormal(bool need_vertex = true);
 	public:
 		//物体id
 		int id_;
@@ -51,14 +57,19 @@ namespace KZEngine {
 		vector<Vertex> vlist_local_;
 		//变换顶点列表
 		vector<Vertex> vlist_tran_;
-
+		//面法线
+		vector<KZMath::KZVector4D> face_normal_;
 		//索引数量
 		int num_index_;
 		//索引数组
 		vector<uint32_t> index_;
+		//是否光照计算
+		bool is_light_ = false;
+		//材质id
+		vector<uint32_t> mat_id_;
 	private:
 		//
 	};
 }
 
-#endif // !KZ_OBJECT
+#endif // !OBJECT_H
