@@ -6,12 +6,14 @@ link_directories("${PROJECT_SOURCE_DIR}/lib")
 
 set(SRCS 
 	glad.c
-	Shader.cpp
+	shader.cpp
 	stb_image.cpp
 	camera.cpp
 	main.cpp
-	MyFShader.fs
-	MyVShader.vs
+	cube_fshader.fs
+	cube_vshader.vs
+	pyramid_fshader.fs
+	pyramid_vshader.vs
 )
 
 add_executable(CG_OpenglDemo ${SRCS})

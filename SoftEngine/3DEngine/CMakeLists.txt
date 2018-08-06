@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 include_directories("${PROJECT_SOURCE_DIR}/3DEngine")
-link_directories("${PROJECT_BINARY_DIR}/KZMath/Debug")
 
 set(SRCS
 	camera.cpp
-	Image.cpp
+	image.cpp
 	light.cpp
 	material.cpp
 	object.cpp
@@ -15,4 +14,5 @@ set(SRCS
 )
 
 add_executable(KZEngine ${SRCS})
-target_link_libraries(KZEngine KZMath.lib)
+target_link_libraries(KZEngine debug ${PROJECT_BINARY_DIR}/KZMath/Debug/KZMath.lib)
+target_link_libraries(KZEngine optimized ${PROJECT_BINARY_DIR}/KZMath/Release/KZMath.lib)

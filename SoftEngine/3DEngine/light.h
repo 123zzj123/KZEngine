@@ -18,11 +18,15 @@ namespace KZEngine {
 		};
 	public:
 		//颜色构造函数
-		ColorTyp(unsigned char r = 0, unsigned char g = 0, unsigned char b = 0, unsigned char a = 255) :r_(r), g_(g), b_(b), a_(a) {};
+		explicit ColorTyp(unsigned char r = 0, unsigned char g = 0, unsigned char b = 0, unsigned char a = 255) :r_(r), g_(g), b_(b), a_(a) {};
 		//颜色加法
 		ColorTyp operator+ (const ColorTyp& c) const;
+		//颜色加法
+		void operator+= (const ColorTyp& c);
 		//颜色乘法
 		ColorTyp operator* (const ColorTyp& c) const;
+		//颜色浮点值乘法
+		ColorTyp operator* (float num) const;
 		//颜色浮点值乘法
 		void operator*= (float num);
 		//设置颜色
@@ -69,6 +73,8 @@ namespace KZEngine {
 		DirectionLight(const Color& color, const KZMath::KZVector4D& dir) :LightBase(color), dir_(dir) { type_ = LightType::DIRECTION; }
 		//计算光照强度
 		Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		//获取光源向量
+		KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos);
 	private:
 		//光源方向
 		KZMath::KZVector4D dir_;

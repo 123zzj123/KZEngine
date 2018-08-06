@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "shader.h"
 
 const string VERTEXSHADER = "Vertex Shader";
 const string FRAGMENTSHADER = "Fragment Shader";
@@ -75,7 +75,7 @@ Shader::Shader(const char * vertexPath, const char * fragmentPath, const char * 
 	}
 }
 
-void Shader::use() {
+void Shader::Use() {
 	glUseProgram(id_);
 }
 
@@ -84,11 +84,15 @@ void Shader::SetInt(const std::string &name, int value) const
 	glUniform1i(glGetUniformLocation(id_, name.c_str()), value);
 }
 
-void Shader::SetVec4(const std::string &name, const glm::vec4 &value) const
+void Shader::SetFloat(const std::string &name, float value) const
 {
-	glUniform4fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
+	glUniform1f(glGetUniformLocation(id_, name.c_str()), value);
 }
 
+void Shader::SetVec3(const std::string &name, const glm::vec3 &value) const
+{
+	glUniform3fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
+}
 
 void Shader::SetMat4(const std::string &name, const glm::mat4 &mat) const
 {

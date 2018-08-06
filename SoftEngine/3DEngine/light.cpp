@@ -14,12 +14,35 @@ ColorTyp KZEngine::ColorTyp::operator+ (const ColorTyp& c) const {
 	return res;
 }
 
+void KZEngine::ColorTyp::operator+= (const ColorTyp& c) {
+	r_ += c.r_;
+	r_ = r_ > 255 ? 255 : r_;
+	g_ += c.g_;
+	g_ = g_ > 255 ? 255 : g_;
+	b_ += c.b_;
+	b_ = b_ > 255 ? 255 : b_;
+	a_ = 255;
+}
+
 //颜色乘法
 ColorTyp KZEngine::ColorTyp::operator* (const ColorTyp& c) const {
 	Color res;
 	res.r_ = r_ * c.r_ / 255;
 	res.g_ = g_ * c.g_ / 255;
 	res.b_ = b_ * c.b_ / 255;
+	res.a_ = 255;
+	return res;
+}
+
+//颜色乘法
+ColorTyp KZEngine::ColorTyp::operator* (float num) const {
+	Color res;
+	res.r_ = r_ * num;
+	res.r_ = res.r_ > 255 ? 255 : res.r_;
+	res.g_ = g_ * num;
+	res.g_ = res.g_ > 255 ? 255 : res.g_;
+	res.b_ = b_ * num;
+	res.b_ = res.b_ > 255 ? 255 : res.b_;
 	res.a_ = 255;
 	return res;
 }
@@ -44,6 +67,11 @@ Color LightBase::CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos, c
 //获取光源向量
 KZMath::KZVector4D LightBase::GetLightVec(const KZMath::KZVector4D& vertex_pos) {
 	return KZMath::KZVector4D(0, 0, 0);
+}
+
+//获取光源向量
+KZMath::KZVector4D DirectionLight::GetLightVec(const KZMath::KZVector4D& vertex_pos) {
+	return -dir_;
 }
 
 //计算光照强度

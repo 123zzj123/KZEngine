@@ -1,10 +1,15 @@
 #include"pipeline.h"
+#include<omp.h>
 using namespace KZEngine;
 
 //构造函数
 KZPipeLine::KZPipeLine() {
 	render_list_ = NULL;
 	main_camera_.GetCameraPos().Set(1.5f, 1.5f, 3);
+	//LightBase* point_light = new PointLight(Color(255, 255, 255), KZMath::KZVector4D(2, 4, -3), 1.0, 0.0f, 0.0f);
+	LightBase* ambient_light = new AmbientLight(Color(255, 255, 255));
+	//light_vec.push_back(point_light);
+	light_vec.push_back(ambient_light);
 	Initial();
 };
 
@@ -128,7 +133,7 @@ void KZPipeLine::CreateCube() {
 	cube_obj.mat_id_[0] = 0;
 	cube_obj.mat_id_[1] = 0;
 	string texture_path = "container.jpg";
-	static KZEngine::KZMaterial cube_mat(Color(255, 255, 255), texture_path, 1.0, 0.0, 0.0, 0.0);
+	static KZEngine::KZMaterial cube_mat(Color(255, 255, 0), texture_path, 0.1, 0.7, 0.0, 0.0);
 	cube_mat.id_ = 1;
 	cube_mat.has_texture_ = true;
 	AddMaterial(cube_mat);
@@ -154,10 +159,10 @@ void KZPipeLine::CreatePyramid() {
 	v3.pos.Set(0, 0, 2);
 	v4.pos.Set(0, 2, 1);
 
-	v1.color.Set(255, 0, 0);
+	/*v1.color.Set(255, 0, 0);
 	v2.color.Set(0, 255, 0);
 	v3.color.Set(0, 0, 255);
-	v4.color.Set(255, 255, 0);
+	v4.color.Set(255, 255, 0);*/
 
 	pyramid.vlist_local_.push_back(v1);
 	pyramid.vlist_local_.push_back(v2);
@@ -189,8 +194,8 @@ void KZPipeLine::CreatePyramid() {
 
 	pyramid.CalculateRadian();
 	pyramid.CalculateNormal();
-
-	pyramid.mat_id_.resize(4, -1);
+	pyramid.is_light_ = true;
+	pyramid.mat_id_.resize(4, 0);
 	object_vec_.push_back(pyramid);
 }
 
@@ -234,9 +239,15 @@ void KZPipeLine::RemoveBackface() {
 					if (object_vec_[i].is_light_) {
 						uint32_t light_num = light_vec.size();
 						for (uint32_t k = 0; k < light_num; ++k) {
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color = mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[i], object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos, object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].normal);
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color = mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[i], object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].pos, object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].normal);
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color = mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[i], object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].pos, object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].normal);
+							object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k],
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos,
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].normal);
+							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k], 
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].pos, 
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].normal);
+							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k], 
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].pos, 
+													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].normal);
 						}
 					}
 					tri.vertex_list[0] = object_vec_[i].vlist_tran_[object_vec_[i].index_[j]];
@@ -299,17 +310,13 @@ void KZPipeLine::FrameUpdate() {
 	DWORD start = ::GetTickCount();
 	////初始化
 	tri_num_ = 0;
-	for (uint32_t i = 0; i < object_num_; ++i) {
-		object_active_[i] = true;
-	}
-	for (uint32_t i = 0; i < view_width; ++i) {
-		for (uint32_t j = 0; j < view_height; ++j) {
+	fill_n(object_active_.begin(), object_num_, true);
+	for (int i = 0; i < view_width; ++i) {
+		for (int j = 0; j < view_height; ++j) {
 			z_buffer_[i][j] = 2.0f;
 		}
 	}
-	for (uint32_t i = 0; i < view_width * view_height * 3; ++i) {
-		frame_buffer_[i] = 0;
-	}
+	memset(frame_buffer_, 0, view_height * view_width * 3 * sizeof(unsigned char));
 	vector<Triangle>().swap(render_list_->tri_list_);
 
 	//固定管线
@@ -352,10 +359,7 @@ void KZPipeLine::Initial() {
 			z_buffer_[i][j] = 2.0f;
 		}
 	}
-	frame_buffer_ = new unsigned char[view_width * view_height * 3];
-	for (uint32_t i = 0; i < view_width * view_height * 3; ++i) {
-		frame_buffer_[i] = 0;
-	}
+	frame_buffer_ = new unsigned char[view_width * view_height * 3]();
 	record_time_ = ::GetTickCount();
 }
 

@@ -1,6 +1,6 @@
 #include"camera.h"
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : front_(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed_(g_SPEED), mouse_sensity_(g_SENSITIVITY), zoom_(g_ZOOM)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : front_(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed_(kSPEED), mouse_sensity_(kSENSITIVITY), zoom_(kZOOM)
 {
 	position_ = position;
 	world_up_ = up;
@@ -9,7 +9,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : front
 	UpdateCameraVectors();
 }
 
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : front_(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed_(g_SPEED), mouse_sensity_(g_SENSITIVITY), zoom_(g_ZOOM)
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : front_(glm::vec3(0.0f, 0.0f, -1.0f)), movement_speed_(kSPEED), mouse_sensity_(kSENSITIVITY), zoom_(kZOOM)
 {
 	position_ = glm::vec3(posX, posY, posZ);
 	world_up_ = glm::vec3(upX, upY, upZ);
