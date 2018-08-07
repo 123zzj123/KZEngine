@@ -29,7 +29,7 @@ namespace KZEngine {
 		//删除单实例
 		static void DeleteInstance() {
 			if (p_instance_) {
-				for (uint32_t i = 0; i < p_instance_->view_width; ++i) {
+				for (uint32_t i = 0; i < p_instance_->view_width_; ++i) {
 					delete[] p_instance_->z_buffer_[i];
 				}
 				delete[] p_instance_->z_buffer_;
@@ -47,6 +47,8 @@ namespace KZEngine {
 		void CreateCube();
 		//创建三棱锥
 		void CreatePyramid();
+		//改变光状态
+		void ChangeLight(uint32_t light_index);
 		//获取hwnd
 		inline HWND GetWindowHwnd() {
 			return hwnd_;
@@ -56,11 +58,11 @@ namespace KZEngine {
 		}
 		//获取窗口宽度
 		inline uint32_t GetWindowWidth() {
-			return view_width;
+			return view_width_;
 		}
 		//获取窗口高度
 		inline uint32_t GetWindowHeight() {
-			return view_height;
+			return view_height_;
 		}
 		//获取帧缓冲
 		inline unsigned char* GetFrameBuffer() {
@@ -90,11 +92,13 @@ namespace KZEngine {
 		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
 	private:
 		//光源数组
-		vector<LightBase*> light_vec;
+		vector<LightBase*> light_vec_;
+		//bool数组
+		vector<bool> light_active_vec_;
 		//视口宽度
-		uint32_t view_width;
+		uint32_t view_width_;
 		//视口高度
-		uint32_t view_height;
+		uint32_t view_height_;
 		//物体数目
 		uint32_t object_num_;
 		//三角形数量

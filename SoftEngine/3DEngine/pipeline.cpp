@@ -6,10 +6,15 @@ using namespace KZEngine;
 KZPipeLine::KZPipeLine() {
 	render_list_ = NULL;
 	main_camera_.GetCameraPos().Set(1.5f, 1.5f, 3);
-	//LightBase* point_light = new PointLight(Color(255, 255, 255), KZMath::KZVector4D(2, 4, -3), 1.0, 0.0f, 0.0f);
+	LightBase* point_light = new PointLight(Color(255, 255, 255), KZMath::KZVector4D(2, 4, -3), 1.0, 0.0f, 0.0f);
 	LightBase* ambient_light = new AmbientLight(Color(255, 255, 255));
-	//light_vec.push_back(point_light);
-	light_vec.push_back(ambient_light);
+	LightBase* direction_light = new DirectionLight(Color(255, 255, 255), KZMath::KZVector4D(-1, 0, 0));
+	light_vec_.push_back(point_light);
+	light_vec_.push_back(ambient_light);
+	light_vec_.push_back(direction_light);
+	light_active_vec_.push_back(true);
+	light_active_vec_.push_back(false);
+	light_active_vec_.push_back(false);
 	Initial();
 };
 
@@ -132,6 +137,9 @@ void KZPipeLine::CreateCube() {
 	cube_obj.mat_id_.resize(12, -1);
 	cube_obj.mat_id_[0] = 0;
 	cube_obj.mat_id_[1] = 0;
+	KZMath::KZMatrix44 matrix;
+	matrix.RotationY(60);
+	cube_obj.RotationMatrix(matrix);;
 	string texture_path = "container.jpg";
 	static KZEngine::KZMaterial cube_mat(Color(255, 255, 0), texture_path, 0.1, 0.7, 0.0, 0.0);
 	cube_mat.id_ = 1;
@@ -237,17 +245,19 @@ void KZPipeLine::RemoveBackface() {
 				{
 					KZEngine::Triangle tri;
 					if (object_vec_[i].is_light_) {
-						uint32_t light_num = light_vec.size();
+						uint32_t light_num = light_vec_.size();
 						for (uint32_t k = 0; k < light_num; ++k) {
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k],
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos,
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].normal);
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k], 
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].pos, 
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].normal);
-							object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec[k], 
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].pos, 
-													object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].normal);
+							if (light_active_vec_[k]) {
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos,
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].normal);
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].pos,
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].normal);
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].pos,
+									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].normal);
+							}
 						}
 					}
 					tri.vertex_list[0] = object_vec_[i].vlist_tran_[object_vec_[i].index_[j]];
@@ -295,8 +305,8 @@ void KZPipeLine::TransformWorldToPer(Projection projection) {
 
 //转化到视口坐标
 void KZPipeLine::TransformPerToViewPort() {
-	float alpha = 0.5f * view_width - 0.5f;
-	float beta = 0.5f * view_height - 0.5f;
+	float alpha = 0.5f * view_width_ - 0.5f;
+	float beta = 0.5f * view_height_ - 0.5f;
 	for (uint32_t i = 0; i < tri_num_; ++i) {
 		for (uint32_t j = 0; j < 3; ++j) {
 			render_list_->tri_list_[i].vertex_list[j].pos.x_ = alpha + alpha * render_list_->tri_list_[i].vertex_list[j].pos.x_;
@@ -311,12 +321,12 @@ void KZPipeLine::FrameUpdate() {
 	////初始化
 	tri_num_ = 0;
 	fill_n(object_active_.begin(), object_num_, true);
-	for (int i = 0; i < view_width; ++i) {
-		for (int j = 0; j < view_height; ++j) {
+	for (int i = 0; i < view_width_; ++i) {
+		for (int j = 0; j < view_height_; ++j) {
 			z_buffer_[i][j] = 2.0f;
 		}
 	}
-	memset(frame_buffer_, 0, view_height * view_width * 3 * sizeof(unsigned char));
+	memset(frame_buffer_, 0, view_height_ * view_width_ * 3 * sizeof(unsigned char));
 	vector<Triangle>().swap(render_list_->tri_list_);
 
 	//固定管线
@@ -348,18 +358,18 @@ void KZPipeLine::Initial() {
 	}
 	tri_num_ = 0;
 	object_num_ = 0;
-	view_height = 600;
-	view_width = 800;
-	z_buffer_ = new float*[view_width];
+	view_height_ = 600;
+	view_width_ = 800;
+	z_buffer_ = new float*[view_width_];
 	object_vec_.reserve(8);
 	object_active_.reserve(8);
-	for (uint32_t i = 0; i < view_width; ++i) {
-		z_buffer_[i] = new float[view_height]();
-		for (uint32_t j = 0; j < view_height; ++j) {
+	for (uint32_t i = 0; i < view_width_; ++i) {
+		z_buffer_[i] = new float[view_height_]();
+		for (uint32_t j = 0; j < view_height_; ++j) {
 			z_buffer_[i][j] = 2.0f;
 		}
 	}
-	frame_buffer_ = new unsigned char[view_width * view_height * 3]();
+	frame_buffer_ = new unsigned char[view_width_ * view_height_ * 3]();
 	record_time_ = ::GetTickCount();
 }
 
@@ -539,12 +549,12 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		return;
 	}
 	//计算最大和最小x限制范围
-	min_x = min_x < 0 ? 0 : min_x > view_width - 1 ? view_width - 1 : min_x;
-	max_x = max_x > view_width - 1 ? view_width - 1 : max_x < 0 ? 0 : max_x;
+	min_x = min_x < 0 ? 0 : min_x > view_width_ - 1 ? view_width_ - 1 : min_x;
+	max_x = max_x > view_width_ - 1 ? view_width_ - 1 : max_x < 0 ? 0 : max_x;
 
 	//垂直裁剪
-	y_start = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height - 1;
-	y_end = v2.pos.y_ > view_height - 1 ? view_height - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
+	y_start = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height_ - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height_ - 1;
+	y_end = v2.pos.y_ > view_height_ - 1 ? view_height_ - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
 
 	float y_error = (y_start - v0.pos.y_);
 	//根据y值误差修正z,x,r,g,b,s,t
@@ -651,7 +661,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
 					}
 					//draw point
-					uint32_t dist = j * view_width * 3 + k * 3;
+					uint32_t dist = j * view_width_ * 3 + k * 3;
 					frame_buffer_[dist] = final_color.b_;//Blue
 					frame_buffer_[dist + 1] = final_color.g_;//Green
 					frame_buffer_[dist + 2] = final_color.r_;//Red 
@@ -810,12 +820,12 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 	}
 
 	//计算最大和最小x限制范围
-	min_x = min_x < 0 ? 0 : min_x > view_width - 1 ? view_width - 1 : min_x;
-	max_x = max_x > view_width - 1 ? view_width - 1 : max_x < 0 ? 0 : max_x;
+	min_x = min_x < 0 ? 0 : min_x > view_width_ - 1 ? view_width_ - 1 : min_x;
+	max_x = max_x > view_width_ - 1 ? view_width_ - 1 : max_x < 0 ? 0 : max_x;
 
 	//垂直裁剪
-	y_end = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height - 1;
-	y_start = v2.pos.y_ > view_height - 1 ? view_height - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
+	y_end = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height_ - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height_ - 1;
+	y_start = v2.pos.y_ > view_height_ - 1 ? view_height_ - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
 
 	float y_error = (v2.pos.y_ - y_start);
 	//根据y值误差修正z,x,r,g,b,s,t
@@ -918,7 +928,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
 					}
 					//draw point
-					uint32_t dist = j * view_width * 3 + k * 3;
+					uint32_t dist = j * view_width_ * 3 + k * 3;
 					//draw point
 					frame_buffer_[dist] = final_color.b_;//Blue
 					frame_buffer_[dist + 1] = final_color.g_;//Green
@@ -989,4 +999,9 @@ void KZPipeLine::AddMaterial(const KZEngine::KZMaterial& new_mat) {
 	if (index == mat_num) {
 		mat_vec_.push_back(new_mat);
 	}
+}
+
+//改变光状态
+void KZPipeLine::ChangeLight(uint32_t light_index) {
+	light_active_vec_[light_index] = !(light_active_vec_[light_index]);
 }

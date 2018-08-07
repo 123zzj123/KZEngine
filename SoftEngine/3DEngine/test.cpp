@@ -51,6 +51,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessKeyboard(KZEngine::CameraMovement::RIGHT, 0.02f);
 			break;
 		}
+		//0
+		case 0x60 :
+		{
+			KZEngine::KZPipeLine::GetInstance()->ChangeLight(0);
+			break;
+		}
+		//1
+		case 0x61:
+		{
+			KZEngine::KZPipeLine::GetInstance()->ChangeLight(1);
+			break;
+		}
+		//2
+		case 0x62:
+		{
+			KZEngine::KZPipeLine::GetInstance()->ChangeLight(2);
+			break;
+		}
 		default:
 			break;
 		}
@@ -91,8 +109,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		//将画布贴到绘图设备上
 		SelectObject(mem_dc, bmp_back);
 		//复制到系统设备上显示  
-		BitBlt(hdc, 0, 0, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight(), mem_dc, 0, 0, SRCCOPY);
-		
+		bool success = BitBlt(hdc, 0, 0, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight(), mem_dc, 0, 0, SRCCOPY);
 		DeleteObject(bmp_back);//释放位图资源  
 		DeleteDC(mem_dc);//释放辅助绘图设备  
 		ReleaseDC(hwnd, hdc);//归还系统绘图设备

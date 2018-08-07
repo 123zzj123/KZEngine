@@ -49,6 +49,7 @@ void KZObject::ScaleMath(const KZMath::KZVector4D& vector) {
 void KZObject::RotationMatrix(const KZMath::KZMatrix44& matrix) {
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		vlist_local_[i].pos = matrix * vlist_local_[i].pos;
+		vlist_local_[i].normal = matrix * vlist_local_[i].normal;
 	}
 	ux_ = matrix * ux_;
 	uy_ = matrix * uy_;

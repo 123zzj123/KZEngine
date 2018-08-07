@@ -267,10 +267,10 @@ void KZMatrix44::RotationYInverse() {
 //∑µªÿ»∆y÷·–˝◊™æÿ’Û
 void KZMatrix44::RotationY(float angle) {
 	Identity();
-	m00_ = cos(angle);
-	m02_ = sin(angle);
-	m20_ = -sin(angle);
-	m22_ = cos(angle);
+	m00_ = cos(KZMath::AngleToRadian(angle));
+	m02_ = sin(KZMath::AngleToRadian(angle));
+	m20_ = -sin(KZMath::AngleToRadian(angle));
+	m22_ = cos(KZMath::AngleToRadian(angle));
 	return;
 }
 
