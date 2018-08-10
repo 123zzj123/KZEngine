@@ -1,8 +1,8 @@
-#include"pipeline.h"
+ï»¿#include"pipeline.h"
 #include<omp.h>
 using namespace KZEngine;
 
-//¹¹Ôìº¯Êı
+//æ„é€ å‡½æ•°
 KZPipeLine::KZPipeLine() {
 	render_list_ = NULL;
 	main_camera_.GetCameraPos().Set(1.5f, 1.5f, 3);
@@ -18,12 +18,20 @@ KZPipeLine::KZPipeLine() {
 	Initial();
 };
 
-//´ÓÎÄ¼şÖĞ¼ÓÔØ
+KZPipeLine::~KZPipeLine() {
+	for (uint32_t i = 0; i < view_width_; ++i) {
+		delete[] z_buffer_[i];
+	}
+	delete[] z_buffer_;
+	delete[] frame_buffer_;
+}
+
+//ä»æ–‡ä»¶ä¸­åŠ è½½
 void KZPipeLine::LoadFromFile() {
 	//to do
 }
 
-//´´½¨cube
+//åˆ›å»ºcube
 void KZPipeLine::CreateCube() {
 	++object_num_;
 	KZObject cube_obj;
@@ -131,15 +139,11 @@ void KZPipeLine::CreateCube() {
 	cube_obj.index_.push_back(2);
 	cube_obj.index_.push_back(6);
 
-	cube_obj.CalculateRadian();
-	cube_obj.CalculateNormal();
-
 	cube_obj.mat_id_.resize(12, -1);
 	cube_obj.mat_id_[0] = 0;
 	cube_obj.mat_id_[1] = 0;
-	KZMath::KZMatrix44 matrix;
-	matrix.RotationY(60);
-	cube_obj.RotationMatrix(matrix);;
+	cube_obj.CalculateRadian();
+	cube_obj.CalculateNormal();
 	string texture_path = "container.jpg";
 	static KZEngine::KZMaterial cube_mat(Color(255, 255, 0), texture_path, 0.1, 0.7, 0.0, 0.0);
 	cube_mat.id_ = 1;
@@ -207,24 +211,24 @@ void KZPipeLine::CreatePyramid() {
 	object_vec_.push_back(pyramid);
 }
 
-//ÎïÌåÏû³ı£¬°üÎ§Çò²âÊÔ
+//ç‰©ä½“æ¶ˆé™¤ï¼ŒåŒ…å›´çƒæµ‹è¯•
 void KZPipeLine::CullObject() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
-		//¸ù¾İÔ¶½üÆ½Ãæ²Ã¼ô
-		if ((object_vec_[i].world_pos_.z_ - object_vec_[i].max_radius_ < main_camera_.GetCameraFarClip()) || (object_vec_[i].world_pos_.z_ + object_vec_[i].max_radius_ > main_camera_.GetCameraNearClip())) {
+		//æ ¹æ®è¿œè¿‘å¹³é¢è£å‰ª
+		if ((object_vec_[i].world_pos_.z_ + object_vec_[i].max_radius_ < main_camera_.GetCameraFarClip()) || (object_vec_[i].world_pos_.z_ - object_vec_[i].max_radius_ > main_camera_.GetCameraNearClip())) {
 			object_active_[i] = false;
 			continue;
 		}
-		//¸ù¾İ×óÓÒÆ½Ãæ²Ã¼ô
+		//æ ¹æ®å·¦å³å¹³é¢è£å‰ª
 		float w_test = main_camera_.GetViewRight() * object_vec_[i].world_pos_.z_ / main_camera_.GetCameraNearClip();
-		if ((object_vec_[i].world_pos_.x_ + object_vec_[i].max_radius_ > w_test) || (object_vec_[i].world_pos_.x_ - object_vec_[i].max_radius_ < -w_test)) {
+		if ((object_vec_[i].world_pos_.x_ - object_vec_[i].max_radius_ > w_test) || (object_vec_[i].world_pos_.x_ + object_vec_[i].max_radius_ < -w_test)) {
 			object_active_[i] = false;
 			continue;
 		}
 
-		//¸ù¾İÉÏÏÂÆ½Ãæ²Ã¼ô
+		//æ ¹æ®ä¸Šä¸‹å¹³é¢è£å‰ª
 		float h_test = main_camera_.GetViewTop() * object_vec_[i].world_pos_.z_ / main_camera_.GetCameraNearClip();
-		if ((object_vec_[i].world_pos_.y_ + object_vec_[i].max_radius_ > h_test) || (object_vec_[i].world_pos_.y_ - object_vec_[i].max_radius_ < -h_test)) {
+		if ((object_vec_[i].world_pos_.y_ - object_vec_[i].max_radius_ > h_test) || (object_vec_[i].world_pos_.y_ + object_vec_[i].max_radius_ < -h_test)) {
 			object_active_[i] = false;
 			continue;
 		}
@@ -232,13 +236,14 @@ void KZPipeLine::CullObject() {
 	return;
 }
 
-//±³ÃæÏû³ı
+//èƒŒé¢æ¶ˆé™¤
 void KZPipeLine::RemoveBackface() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		if (object_active_[i]) {
 			for (uint32_t j = 0; j < object_vec_[i].num_index_; j += 3) {
+				uint32_t face_index = j / 3;
 				KZMath::KZVector4D observe_vec = main_camera_.GetCameraPos() - object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos;
-				if (object_vec_[i].face_normal_[j / 3].Vector3Dot(observe_vec) < 0) {
+				if (object_vec_[i].face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 					continue;
 				}
 				else
@@ -248,13 +253,13 @@ void KZPipeLine::RemoveBackface() {
 						uint32_t light_num = light_vec_.size();
 						for (uint32_t k = 0; k < light_num; ++k) {
 							if (light_active_vec_[k]) {
-								object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].color += mat_vec_[object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].pos,
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j]].normal);
-								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].color += mat_vec_[object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].pos,
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]].normal);
-								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color += mat_vec_[object_vec_[i].mat_id_[j / 3]].CalculateFinalColor(light_vec_[k],
+								object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].color += mat_vec_[object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].pos,
 									object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]].normal);
 							}
@@ -263,7 +268,7 @@ void KZPipeLine::RemoveBackface() {
 					tri.vertex_list[0] = object_vec_[i].vlist_tran_[object_vec_[i].index_[j]];
 					tri.vertex_list[1] = object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 1]];
 					tri.vertex_list[2] = object_vec_[i].vlist_tran_[object_vec_[i].index_[j + 2]];
-					tri.material = object_vec_[i].mat_id_[j/3];
+					tri.material = object_vec_[i].mat_id_[face_index];
 					render_list_->tri_list_.push_back(tri);
 					++tri_num_;
 				}
@@ -273,14 +278,14 @@ void KZPipeLine::RemoveBackface() {
 	return;
 }
 
-//×ª»¯µ½ÊÀ½ç×ø±ê
+//è½¬åŒ–åˆ°ä¸–ç•Œåæ ‡
 void KZPipeLine::TransformModelToWorld() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		object_vec_[i].TransformModelToWorldMath();
 	}
 }
 
-//×ª»¯µ½Í¸ÊÓ×ø±ê
+//è½¬åŒ–åˆ°é€è§†åæ ‡
 void KZPipeLine::TransformWorldToPer(Projection projection) {
 	KZMath::KZMatrix44 view, proj;
 	main_camera_.GetViewMatrix(view);
@@ -303,7 +308,7 @@ void KZPipeLine::TransformWorldToPer(Projection projection) {
 	}
 }
 
-//×ª»¯µ½ÊÓ¿Ú×ø±ê
+//è½¬åŒ–åˆ°è§†å£åæ ‡
 void KZPipeLine::TransformPerToViewPort() {
 	float alpha = 0.5f * view_width_ - 0.5f;
 	float beta = 0.5f * view_height_ - 0.5f;
@@ -315,10 +320,10 @@ void KZPipeLine::TransformPerToViewPort() {
 	}
 }
 
-//Ã¿Ö¡¸üĞÂ
+//æ¯å¸§æ›´æ–°
 void KZPipeLine::FrameUpdate() {
 	DWORD start = ::GetTickCount();
-	////³õÊ¼»¯
+	////åˆå§‹åŒ–
 	tri_num_ = 0;
 	fill_n(object_active_.begin(), object_num_, true);
 	for (int i = 0; i < view_width_; ++i) {
@@ -329,14 +334,19 @@ void KZPipeLine::FrameUpdate() {
 	memset(frame_buffer_, 0, view_height_ * view_width_ * 3 * sizeof(unsigned char));
 	vector<Triangle>().swap(render_list_->tri_list_);
 
-	//¹Ì¶¨¹ÜÏß
+	
+	KZMath::KZMatrix44 matrix;
+	matrix.RotationZ(1);
+	object_vec_[0].RotationMatrix(matrix);
+
+	//å›ºå®šç®¡çº¿
 	TransformModelToWorld();
 	CullObject();
 	RemoveBackface();
 	TransformWorldToPer();
 	TransformPerToViewPort();
 	RasterizationDepthTest();
-
+	SwapBuffer();
 	DWORD delta_time = ::GetTickCount() - start;
 	if (delta_time != 0) {
 		float cur_fps = 1000.0f / delta_time;
@@ -351,7 +361,7 @@ void KZPipeLine::FrameUpdate() {
 	}
 }
 
-//³õÊ¼»¯
+//åˆå§‹åŒ–
 void KZPipeLine::Initial() {
 	if (!render_list_) {
 		render_list_ = KZEngine::KZRenderList::GetInstance();
@@ -373,7 +383,7 @@ void KZPipeLine::Initial() {
 	record_time_ = ::GetTickCount();
 }
 
-//¹âÕ¤»¯
+//å…‰æ …åŒ–
 void KZPipeLine::RasterizationDepthTest() {
 	for (uint32_t i = 0; i < tri_num_; ++i) {
 		Vertex temp_v;
@@ -382,7 +392,7 @@ void KZPipeLine::RasterizationDepthTest() {
 		Vertex v2 = render_list_->tri_list_[i].vertex_list[2];
 		float dx_left = 0.0f, dx_right = 0.0f, dz_left = 0.0f, dz_right = 0.0f;
 
-		//°´ÕÕyÖµÉıĞòv0,v1,v2
+		//æŒ‰ç…§yå€¼å‡åºv0,v1,v2
 		if (v0.pos.y_ > v1.pos.y_) {
 			temp_v = v0;
 			v0 = v1;
@@ -405,27 +415,33 @@ void KZPipeLine::RasterizationDepthTest() {
 			has_texture = true;
 		}
 
-		//¼ì²éÊÇ·ñÆ½µ×Èı½ÇĞÎ
+		//æ£€æŸ¥æ˜¯å¦å¹³åº•ä¸‰è§’å½¢
 		if (ceil(v1.pos.y_) == ceil(v2.pos.y_)) {
 			DrawBottomTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
 		}
-		//¼ì²éÊÇ·ñÆ½¶¥Èı½ÇĞÎ
+		//æ£€æŸ¥æ˜¯å¦å¹³é¡¶ä¸‰è§’å½¢
 		else if (ceil(v0.pos.y_) == ceil(v1.pos.y_)) {
 			DrawTopTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
 		}
-		//Ò»°ãÈı½ÇĞÎÏÈ×ö·Ö¸î
+		//ä¸€èˆ¬ä¸‰è§’å½¢å…ˆåšåˆ†å‰²
 		else
 		{
-			float new_x = v0.pos.x_ + (v1.pos.y_ - v0.pos.y_) * (v2.pos.x_ - v0.pos.x_) / (v2.pos.y_ - v0.pos.y_);
+			float one_over_diffy = 1 / (v2.pos.y_ - v0.pos.y_);
+			float diffy_v1v0 = (v1.pos.y_ - v0.pos.y_);
+			float new_x = v0.pos.x_ + diffy_v1v0 * (v2.pos.x_ - v0.pos.x_) * one_over_diffy;
 			float new_y = v1.pos.y_;
-			float new_z = v0.pos.z_ + (v1.pos.y_ - v0.pos.y_) * (v2.pos.z_ - v0.pos.z_) / (v2.pos.y_ - v0.pos.y_);
-			float new_r = v0.color.r_ + (v1.pos.y_ - v0.pos.y_) * (v2.color.r_ - v0.color.r_) / (v2.pos.y_ - v0.pos.y_);
-			float new_g = v0.color.g_ + (v1.pos.y_ - v0.pos.y_) * (v2.color.g_ - v0.color.g_) / (v2.pos.y_ - v0.pos.y_);
-			float new_b = v0.color.b_ + (v1.pos.y_ - v0.pos.y_) * (v2.color.b_ - v0.color.b_) / (v2.pos.y_ - v0.pos.y_);
-			KZMath::KZVector4D new_v(new_x, new_y, new_z);
+			float new_z = v0.pos.z_ + diffy_v1v0 * (v2.pos.z_ - v0.pos.z_) * one_over_diffy;
+			float new_r = v0.color.r_ + diffy_v1v0 * (v2.color.r_ - v0.color.r_) * one_over_diffy;
+			float new_g = v0.color.g_ + diffy_v1v0 * (v2.color.g_ - v0.color.g_) * one_over_diffy;
+			float new_b = v0.color.b_ + diffy_v1v0 * (v2.color.b_ - v0.color.b_) * one_over_diffy;
+			float new_u = (v0.uv.x_*v0.pos.z_ + diffy_v1v0 * (v2.uv.x_*v2.pos.z_ - v0.uv.x_*v0.pos.z_) * one_over_diffy) / new_z;
+			float new_v = (v0.uv.y_*v0.pos.z_ + diffy_v1v0 * (v2.uv.y_*v2.pos.z_ - v0.uv.y_*v0.pos.z_) * one_over_diffy) / new_z;
 			Vertex new_vertex;
 			new_vertex.pos.Set(new_x, new_y, new_z);
 			new_vertex.color.Set(new_r, new_g, new_b);
+			new_vertex.uv.x_ = new_u;
+			new_vertex.uv.y_ = new_v;
+			new_vertex.normal = render_list_->tri_list_[i].face_normal;
 			DrawBottomTri(v0, v1, new_vertex, has_texture, render_list_->tri_list_[i].material);
 			DrawTopTri(new_vertex, v1, v2, has_texture, render_list_->tri_list_[i].material);
 		}
@@ -433,7 +449,7 @@ void KZPipeLine::RasterizationDepthTest() {
 	}
 }
 
-//¹âÕ¤»¯Æ½µ×Èı½ÇĞÎ
+//å…‰æ …åŒ–å¹³åº•ä¸‰è§’å½¢
 void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id) {
 	float dx_left = 0.0f, dx_right = 0.0f, dz_left = 0.0f, dz_right = 0.0f;
 	float dr_left = 0.0f, dr_right = 0.0f, dg_left = 0.0f, dg_right = 0.0f, db_left = 0.0f, db_right = 0.0f;
@@ -449,23 +465,23 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 	
 	float v0_s_overz = 0.0f, v0_t_overz = 0.0f;
 
-	//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+	//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 	if (has_texture) {
 		v0_s_overz = v0.uv.x_ * v0.pos.z_;
 		v0_t_overz = v0.uv.y_ * v0.pos.z_;
 	}
 
-	//¼ÆËã×óÓÒÁ½±ßĞ±ÂÊ
+	//è®¡ç®—å·¦å³ä¸¤è¾¹æ–œç‡
 	if (v2.pos.x_ < v1.pos.x_) {
 		float one_over_y_diff_left = 1 / (v0.pos.y_ - v2.pos.y_);
 		float one_over_y_diff_right = 1 / (v0.pos.y_ - v1.pos.y_);
-		//Çóx,zµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚x,zçš„yçš„å·¦å³æ¢¯åº¦
 		dx_left = (v0.pos.x_ - v2.pos.x_) * one_over_y_diff_left;
 		dx_right = (v0.pos.x_ - v1.pos.x_) * one_over_y_diff_right;
 		dz_left = (v0.pos.z_ - v2.pos.z_) * one_over_y_diff_left;
 		dz_right = (v0.pos.z_ - v1.pos.z_) * one_over_y_diff_right;
 		
-		//ÇóÑÕÉ«r,g,bµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚é¢œè‰²r,g,bçš„yçš„å·¦å³æ¢¯åº¦
 		dr_left = (v0.color.r_ - v2.color.r_) * one_over_y_diff_left;
 		dr_right = (v0.color.r_ - v1.color.r_) * one_over_y_diff_right;
 		dg_left = (v0.color.g_ - v2.color.g_) * one_over_y_diff_left;
@@ -473,16 +489,16 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		db_left = (v0.color.b_ - v2.color.b_) * one_over_y_diff_left;
 		db_right = (v0.color.b_ - v1.color.b_) * one_over_y_diff_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
-			//ÇóÎÆÀís/z,t/zµÄyµÄ×óÓÒÌİ¶È
+			//æ±‚çº¹ç†s/z,t/zçš„yçš„å·¦å³æ¢¯åº¦
 			ds_left = (v0_s_overz - v2.uv.x_ * v2.pos.z_) * one_over_y_diff_left;
 			ds_right = (v0_s_overz - v1.uv.x_ * v1.pos.z_) * one_over_y_diff_right;
 			dt_left = (v0_t_overz - v2.uv.y_ * v2.pos.z_) * one_over_y_diff_left;
 			dt_right = (v0_t_overz - v1.uv.y_ * v1.pos.z_) * one_over_y_diff_right;
 		}
 
-		//¼ÆËãx×î´óÖµ×îĞ¡Öµ,ĞŞÕıÎó²î
+		//è®¡ç®—xæœ€å¤§å€¼æœ€å°å€¼,ä¿®æ­£è¯¯å·®
 		if (v1.pos.x_ < v0.pos.x_) {
 			min_x = v2.pos.x_;
 			max_x = v0.pos.x_;
@@ -503,13 +519,13 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 	{
 		float one_over_y_diff_left = 1 / (v0.pos.y_ - v1.pos.y_);
 		float one_over_y_diff_right = 1 / (v0.pos.y_ - v2.pos.y_);
-		//Çóx,zµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚x,zçš„yçš„å·¦å³æ¢¯åº¦
 		dx_left = (v0.pos.x_ - v1.pos.x_) * one_over_y_diff_left;
 		dx_right = (v0.pos.x_ - v2.pos.x_) * one_over_y_diff_right;
 		dz_left = (v0.pos.z_ - v1.pos.z_) * one_over_y_diff_left;
 		dz_right = (v0.pos.z_ - v2.pos.z_) * one_over_y_diff_right;
 		
-		//ÇóÑÕÉ«r,g,bµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚é¢œè‰²r,g,bçš„yçš„å·¦å³æ¢¯åº¦
 		dr_left = (v0.color.r_ - v1.color.r_) * one_over_y_diff_left;
 		dr_right = (v0.color.r_ - v2.color.r_) * one_over_y_diff_right;
 		dg_left = (v0.color.g_ - v1.color.g_) * one_over_y_diff_left;
@@ -517,9 +533,9 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		db_left = (v0.color.b_ - v1.color.b_) * one_over_y_diff_left;
 		db_right = (v0.color.b_ - v2.color.b_) * one_over_y_diff_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
-			//ÇóÎÆÀís/z,t/zµÄyµÄ×óÓÒÌİ¶È
+			//æ±‚çº¹ç†s/z,t/zçš„yçš„å·¦å³æ¢¯åº¦
 			ds_left = (v0_s_overz - v1.uv.x_ * v1.pos.z_) * one_over_y_diff_left;
 			ds_right = (v0_s_overz - v2.uv.x_ * v2.pos.z_) * one_over_y_diff_right;
 			dt_left = (v0_t_overz - v1.uv.y_ * v1.pos.z_) * one_over_y_diff_left;
@@ -527,7 +543,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		}
 
 
-		//¼ÆËãx×î´óÖµ×îĞ¡Öµ,ĞŞÕıÎó²î
+		//è®¡ç®—xæœ€å¤§å€¼æœ€å°å€¼,ä¿®æ­£è¯¯å·®
 		if (v2.pos.x_ < v0.pos.x_) {
 			min_x = v1.pos.x_;
 			max_x = v0.pos.x_;
@@ -548,16 +564,16 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 	if (max_x < 0) {
 		return;
 	}
-	//¼ÆËã×î´óºÍ×îĞ¡xÏŞÖÆ·¶Î§
+	//è®¡ç®—æœ€å¤§å’Œæœ€å°xé™åˆ¶èŒƒå›´
 	min_x = min_x < 0 ? 0 : min_x > view_width_ - 1 ? view_width_ - 1 : min_x;
 	max_x = max_x > view_width_ - 1 ? view_width_ - 1 : max_x < 0 ? 0 : max_x;
 
-	//´¹Ö±²Ã¼ô
+	//å‚ç›´è£å‰ª
 	y_start = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height_ - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height_ - 1;
 	y_end = v2.pos.y_ > view_height_ - 1 ? view_height_ - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
 
 	float y_error = (y_start - v0.pos.y_);
-	//¸ù¾İyÖµÎó²îĞŞÕız,x,r,g,b,s,t
+	//æ ¹æ®yå€¼è¯¯å·®ä¿®æ­£z,x,r,g,b,s,t
 	z_left = y_error * dz_left + v0.pos.z_;
 	z_right = y_error * dz_right + v0.pos.z_;
 	x_start = y_error * dx_left + v0.pos.x_;
@@ -570,7 +586,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 	b_left = y_error * db_left + v0.color.b_;
 	b_right = y_error * db_right + v0.color.b_;
 
-	//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+	//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 	if (has_texture) {
 		s_left = y_error * ds_left + v0_s_overz;
 		s_right = y_error * ds_right + v0_s_overz;
@@ -588,23 +604,23 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		float delta_tx = 0.0f;
 
 		if (x_end - x_start != 0) {
-			//¼ÆËãz,r,g,b,s,tÏà¶ÔÓÚxµÄÎó²î
+			//è®¡ç®—z,r,g,b,s,tç›¸å¯¹äºxçš„è¯¯å·®
 			float coeff = 1.0f / (x_end - x_start);
 			delta_zx = (z_right - z_left) * coeff ;
 			delta_rx = (r_right - r_left) * coeff;
 			delta_gx = (g_right - g_left) * coeff;
 			delta_bx = (b_right - b_left) * coeff;
 
-			//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+			//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 			if (has_texture) {
 				delta_sx = (s_right - s_left) * coeff;
 				delta_tx = (t_right - t_left) * coeff;
 			}
 			
 		}
-		//Ë®Æ½²Ã¼ô
+		//æ°´å¹³è£å‰ª
 		float fix_x_start = x_start < min_x ? min_x : x_start;
-		//¸ù¾İxÖµÎó²îĞŞÕız,r,g,b,s,t
+		//æ ¹æ®xå€¼è¯¯å·®ä¿®æ­£z,r,g,b,s,t
 		float z_cur = z_left + (fix_x_start - x_start) * delta_zx;
 		float r_cur = r_left + (fix_x_start - x_start) * delta_rx;
 		float g_cur = g_left + (fix_x_start - x_start) * delta_gx;
@@ -613,14 +629,14 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		float s_cur;
 		float t_cur;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
 			s_cur = s_left + (fix_x_start - x_start) * delta_sx;
 			t_cur = t_left + (fix_x_start - x_start) * delta_tx;
 		}
 
 		float fix_x_end = x_end > max_x ? max_x : x_end;
-		//É¨ÃèÏßÖÕµãĞ¡ÓÚ0£¬Ö±½ÓÌø¹ı
+		//æ‰«æçº¿ç»ˆç‚¹å°äº0ï¼Œç›´æ¥è·³è¿‡
 		if (fix_x_end < 0) {
 			x_start += dx_left;
 			x_end += dx_right;
@@ -633,7 +649,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 			b_left += db_left;
 			b_right += db_right;
 
-			//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+			//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 			if (has_texture) {
 				s_left += ds_left;
 				s_right += ds_right;
@@ -646,9 +662,9 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		uint32_t xe = static_cast<uint32_t>(fix_x_end + 0.5f);
 
 		for (uint32_t k = xs; k <= xe; ++k) {
-			//CVV²Ã¼ôz
+			//CVVè£å‰ªz
 			if (z_cur >= -1 && z_cur <= 1) {
-				//Éî¶È»º³å
+				//æ·±åº¦ç¼“å†²
 				if (z_cur <= z_buffer_[k][j]) {
 					z_buffer_[k][j] = z_cur;
 					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
@@ -668,7 +684,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 				}
 			}
 			z_cur += delta_zx;
-			//ÏŞÖÆÑÕÉ«·¶Î§
+			//é™åˆ¶é¢œè‰²èŒƒå›´
 			r_cur += delta_rx;
 			r_cur = r_cur < 0 ? 0 : r_cur > 255 ? 255 : r_cur;
 			g_cur += delta_gx;
@@ -676,9 +692,9 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 			b_cur += delta_bx;
 			b_cur = b_cur < 0 ? 0 : b_cur > 255 ? 255 : b_cur;
 
-			//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+			//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 			if (has_texture) {
-				//ÏŞÖÆÎÆÀí×ø±ê·¶Î§
+				//é™åˆ¶çº¹ç†åæ ‡èŒƒå›´
 				s_cur += delta_sx;
 				s_cur = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
 				t_cur += delta_tx;
@@ -696,7 +712,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		b_left += db_left;
 		b_right += db_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
 			s_left += ds_left;
 			s_right += ds_right;
@@ -706,7 +722,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 	}
 }
 
-//¹âÕ¤»¯Æ½¶¥Èı½ÇĞÎ
+//å…‰æ …åŒ–å¹³é¡¶ä¸‰è§’å½¢
 void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id) {
 	float dx_left = 0.0f, dx_right = 0.0f, dz_left = 0.0f, dz_right = 0.0f;
 	float dr_left = 0.0f, dr_right = 0.0, dg_left = 0.0f, dg_right = 0.0f, db_left = 0.0f, db_right = 0.0f;
@@ -721,22 +737,22 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 
 	float min_x = 0.0f, max_x = 0.0f;
 	float v2_s_overz = 0.0f, v2_t_overz = 0.0f;
-	//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+	//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 	if (has_texture) {
 		v2_s_overz = v2.uv.x_ * v2.pos.z_;
 		v2_t_overz = v2.uv.y_ * v2.pos.z_;
 	}
-	//¼ÆËã×óÓÒÁ½±ßĞ±ÂÊ
+	//è®¡ç®—å·¦å³ä¸¤è¾¹æ–œç‡
 	if (v0.pos.x_ < v1.pos.x_) {
 		float one_over_y_diff_left = 1 / (v2.pos.y_ - v0.pos.y_);
 		float one_over_y_diff_right = 1 / (v2.pos.y_ - v1.pos.y_);
-		//Çóx,zµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚x,zçš„yçš„å·¦å³æ¢¯åº¦
 		dx_left = - (v2.pos.x_ - v0.pos.x_) * one_over_y_diff_left;
 		dx_right = - (v2.pos.x_ - v1.pos.x_) * one_over_y_diff_right;
 		dz_left = - (v2.pos.z_ - v0.pos.z_) * one_over_y_diff_left;
 		dz_right = - (v2.pos.z_ - v1.pos.z_) * one_over_y_diff_right;
 
-		//ÇóÑÕÉ«r,g,bµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚é¢œè‰²r,g,bçš„yçš„å·¦å³æ¢¯åº¦
 		dr_left = - (v2.color.r_ - v0.color.r_) * one_over_y_diff_left;
 		dr_right = - (v2.color.r_ - v1.color.r_) * one_over_y_diff_right;
 		dg_left = - (v2.color.g_ - v0.color.g_) * one_over_y_diff_left;
@@ -744,16 +760,16 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		db_left = - (v2.color.b_ - v0.color.b_) * one_over_y_diff_left;
 		db_right = - (v2.color.b_ - v1.color.b_) * one_over_y_diff_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
-			//ÇóÎÆÀís/z,t/zµÄyµÄ×óÓÒÌİ¶È
+			//æ±‚çº¹ç†s/z,t/zçš„yçš„å·¦å³æ¢¯åº¦
 			ds_left = - (v2_s_overz - v0.uv.x_ * v0.pos.z_) * one_over_y_diff_left;
 			ds_right = - (v2_s_overz - v1.uv.x_ * v1.pos.z_) * one_over_y_diff_right;
 			dt_left = - (v2_t_overz - v0.uv.y_ * v0.pos.z_) * one_over_y_diff_left;
 			dt_right = - (v2_t_overz - v1.uv.y_ * v1.pos.z_) * one_over_y_diff_right;
 		}
 		
-		//¼ÆËãx×î´óÖµ×îĞ¡Öµ,ĞŞÕıÎó²î
+		//è®¡ç®—xæœ€å¤§å€¼æœ€å°å€¼,ä¿®æ­£è¯¯å·®
 		if(v1.pos.x_ < v2.pos.x_) {
 			min_x = v0.pos.x_;
 			max_x = v2.pos.x_;
@@ -774,13 +790,13 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 	{
 		float one_over_y_diff_left = 1 / (v2.pos.y_ - v1.pos.y_);
 		float one_over_y_diff_right = 1 / (v2.pos.y_ - v0.pos.y_);
-		//Çóx,zµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚x,zçš„yçš„å·¦å³æ¢¯åº¦
 		dx_left = - (v2.pos.x_ - v1.pos.x_) * one_over_y_diff_left;
 		dx_right = - (v2.pos.x_ - v0.pos.x_) * one_over_y_diff_right;
 		dz_left = - (v2.pos.z_ - v1.pos.z_) * one_over_y_diff_left;
 		dz_right = - (v2.pos.z_ - v0.pos.z_) * one_over_y_diff_right;
 		
-		//ÇóÑÕÉ«r,g,bµÄyµÄ×óÓÒÌİ¶È
+		//æ±‚é¢œè‰²r,g,bçš„yçš„å·¦å³æ¢¯åº¦
 		dr_left = -(v2.color.r_ - v1.color.r_) * one_over_y_diff_left;
 		dr_right = -(v2.color.r_ - v0.color.r_) * one_over_y_diff_right;
 		dg_left = -(v2.color.g_ - v1.color.g_) * one_over_y_diff_left;
@@ -788,16 +804,16 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		db_left = -(v2.color.b_ - v1.color.b_) * one_over_y_diff_left;
 		db_right = -(v2.color.b_ - v0.color.b_) * one_over_y_diff_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
-			//ÇóÎÆÀís/z,t/zµÄyµÄ×óÓÒÌİ¶È
+			//æ±‚çº¹ç†s/z,t/zçš„yçš„å·¦å³æ¢¯åº¦
 			ds_left = - (v2_s_overz - v1.uv.x_ * v1.pos.z_) * one_over_y_diff_left;
 			ds_right = - (v2_s_overz - v0.uv.x_ * v0.pos.z_) * one_over_y_diff_right;
 			dt_left = - (v2_t_overz - v1.uv.y_ * v1.pos.z_) * one_over_y_diff_left;
 			dt_right = - (v2_t_overz - v0.uv.y_ * v0.pos.z_) * one_over_y_diff_right;
 		}
 		
-		//¼ÆËãx×î´óÖµ×îĞ¡Öµ,ĞŞÕıÎó²î
+		//è®¡ç®—xæœ€å¤§å€¼æœ€å°å€¼,ä¿®æ­£è¯¯å·®
 		if (v0.pos.x_ < v2.pos.x_) {
 			min_x = v1.pos.x_;
 			max_x = v2.pos.x_;
@@ -819,16 +835,16 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		return;
 	}
 
-	//¼ÆËã×î´óºÍ×îĞ¡xÏŞÖÆ·¶Î§
+	//è®¡ç®—æœ€å¤§å’Œæœ€å°xé™åˆ¶èŒƒå›´
 	min_x = min_x < 0 ? 0 : min_x > view_width_ - 1 ? view_width_ - 1 : min_x;
 	max_x = max_x > view_width_ - 1 ? view_width_ - 1 : max_x < 0 ? 0 : max_x;
 
-	//´¹Ö±²Ã¼ô
+	//å‚ç›´è£å‰ª
 	y_end = v0.pos.y_ < 0 ? 0 : v0.pos.y_ < view_height_ - 1 ? static_cast<uint32_t>(v0.pos.y_ + 0.5f) : view_height_ - 1;
 	y_start = v2.pos.y_ > view_height_ - 1 ? view_height_ - 1 : v2.pos.y_ < 0 ? 0 : static_cast<uint32_t>(v2.pos.y_ + 0.5f);
 
 	float y_error = (v2.pos.y_ - y_start);
-	//¸ù¾İyÖµÎó²îĞŞÕız,x,r,g,b,s,t
+	//æ ¹æ®yå€¼è¯¯å·®ä¿®æ­£z,x,r,g,b,s,t
 	z_left = y_error * dz_left + v2.pos.z_;
 	z_right = y_error * dz_right + v2.pos.z_;
 	x_start = y_error * dx_left + v2.pos.x_;
@@ -841,7 +857,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 	b_left = y_error * db_left + v2.color.b_;
 	b_right = y_error * db_right + v2.color.b_;
 
-	//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+	//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 	if (has_texture) {
 		s_left = y_error * ds_left + v2_s_overz;
 		s_right = y_error * ds_right + v2_s_overz;
@@ -859,35 +875,35 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		float delta_tx = 0.0f;
 		if (x_end - x_start != 0) {
 			float coeff = 1.0f / (x_end - x_start);
-			//¼ÆËãz,r,g,b,s,tÏà¶ÔÓÚxµÄÌİ¶È
+			//è®¡ç®—z,r,g,b,s,tç›¸å¯¹äºxçš„æ¢¯åº¦
 			delta_zx = (z_right - z_left) * coeff;
 			delta_rx = (r_right - r_left) * coeff;
 			delta_gx = (g_right - g_left) * coeff;
 			delta_bx = (b_right - b_left) * coeff;
 
-			//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+			//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 			if (has_texture) {
 				delta_sx = (s_right - s_left) * coeff;
 				delta_tx = (t_right - t_left) * coeff;
 			}
 		}
 		float z_cur = z_left;
-		//Ë®Æ½²Ã¼ô
+		//æ°´å¹³è£å‰ª
 		float fix_x_start = x_start < min_x ? min_x : x_start;
-		//¸ù¾İxÖµÎó²îĞŞÕız,r,g,b,s,t
+		//æ ¹æ®xå€¼è¯¯å·®ä¿®æ­£z,r,g,b,s,t
 		float r_cur = r_left + (fix_x_start - x_start) * delta_rx;
 		float g_cur = g_left + (fix_x_start - x_start) * delta_gx;
 		float b_cur = b_left + (fix_x_start - x_start) * delta_bx;
 		
 		float s_cur = 0.0f, t_cur = 0.0f;
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
 			s_cur = s_left + (fix_x_start - x_start) * delta_sx;
 			t_cur = t_left + (fix_x_start - x_start) * delta_tx;
 		}
 
 		float fix_x_end = x_end > max_x ? max_x : x_end;
-		//É¨ÃèÏßÖÕµãĞ¡ÓÚ0£¬Ö±½ÓÌø¹ı
+		//æ‰«æçº¿ç»ˆç‚¹å°äº0ï¼Œç›´æ¥è·³è¿‡
 		if(fix_x_end < 0) {
 			x_start += dx_left;
 			x_end += dx_right;
@@ -900,7 +916,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 			b_left += db_left;
 			b_right += db_right;
 
-			//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+			//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 			if (has_texture) {
 				s_left += ds_left;
 				s_right += ds_right;
@@ -913,9 +929,9 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		uint32_t xs = static_cast<uint32_t>(fix_x_start + 0.5f);
 		uint32_t xe = static_cast<uint32_t>(fix_x_end + 0.5f);
 		for (uint32_t k = xs; k <= xe; ++k) {
-			//CVV²Ã¼ôz
+			//CVVè£å‰ªz
 			if (z_cur >= -1 && z_cur <= 1) {
-				//Éî¶È»º³å¼ì²â
+				//æ·±åº¦ç¼“å†²æ£€æµ‹
 				if (z_cur <= z_buffer_[k][j]) {
 					z_buffer_[k][j] = z_cur;
 					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
@@ -935,7 +951,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 					frame_buffer_[dist + 2] = final_color.r_;//Red
 				}
 				z_cur += delta_zx;
-				//ÏŞÖÆÑÕÉ«·¶Î§
+				//é™åˆ¶é¢œè‰²èŒƒå›´
 				r_cur += delta_rx;
 				r_cur = r_cur < 0 ? 0 : r_cur > 255 ? 255 : r_cur;
 				g_cur += delta_gx;
@@ -943,9 +959,9 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 				b_cur += delta_bx;
 				b_cur = b_cur < 0 ? 0 : b_cur > 255 ? 255 : b_cur;
 
-				//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+				//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 				if (has_texture) {
-					//ÏŞÖÆÎÆÀí×ø±ê·¶Î§
+					//é™åˆ¶çº¹ç†åæ ‡èŒƒå›´
 					s_cur += delta_sx;
 					s_cur = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
 					t_cur += delta_tx;
@@ -965,7 +981,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		b_left += db_left;
 		b_right += db_right;
 
-		//¼ì²éÊÇ·ñÌùÍ¼£¬±ÜÃâ²»±ØÒª¼ÆËã
+		//æ£€æŸ¥æ˜¯å¦è´´å›¾ï¼Œé¿å…ä¸å¿…è¦è®¡ç®—
 		if (has_texture) {
 			s_left += ds_left;
 			s_right += ds_right;
@@ -975,7 +991,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 	}
 }
 
-//ÉèÖÃfps
+//è®¾ç½®fps
 void KZPipeLine::SetGameFps() {
 	char window_title[64];
 	sprintf_s(window_title, "Engine FPS:%f", fps_);
@@ -985,11 +1001,11 @@ void KZPipeLine::SetGameFps() {
 	fps_ = 0;
 }
 
-//Ôö¼Ó²ÄÖÊ
+//å¢åŠ æè´¨
 void KZPipeLine::AddMaterial(const KZEngine::KZMaterial& new_mat) {
 	uint32_t mat_num = mat_vec_.size();
 	uint32_t index;
-	//±éÀú²ÄÖÊÊı×é·ÀÖ¹ÖØ¸´²ÄÖÊ
+	//éå†æè´¨æ•°ç»„é˜²æ­¢é‡å¤æè´¨
 	for (index = 0; index < mat_num; ++index) {
 		if (mat_vec_[index].id_ == new_mat.id_) {
 			break;
@@ -1001,7 +1017,32 @@ void KZPipeLine::AddMaterial(const KZEngine::KZMaterial& new_mat) {
 	}
 }
 
-//¸Ä±ä¹â×´Ì¬
+//æ”¹å˜å…‰çŠ¶æ€
 void KZPipeLine::ChangeLight(uint32_t light_index) {
 	light_active_vec_[light_index] = !(light_active_vec_[light_index]);
+}
+
+//åŒç¼“å†²äº¤æ¢
+void KZPipeLine::SwapBuffer() {
+	HDC hdc = GetDC(hwnd_);
+	//åˆ›å»ºè¾…åŠ©ç»˜å›¾è®¾å¤‡  
+	HDC mem_dc = CreateCompatibleDC(hdc);
+	uint32_t w = KZEngine::KZPipeLine::GetInstance()->GetWindowWidth();
+	uint32_t h = KZEngine::KZPipeLine::GetInstance()->GetWindowHeight();
+
+	Gdiplus::Color color(255, 255, 255, 255);
+
+	//åˆ›å»ºGDIæ©ç ä½å›¾ï¼ˆç”»å¸ƒï¼‰
+	HBITMAP bmp_back = CreateCompatibleBitmap(hdc, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight());
+
+	//åˆ›å»ºGDI+æ©ç ä½å›¾ï¼ˆç”»å¸ƒï¼‰
+	Gdiplus::Bitmap bitmap(w, h, 3 * w, PixelFormat24bppRGB, (BYTE*)KZEngine::KZPipeLine::GetInstance()->GetFrameBuffer());
+	bitmap.GetHBITMAP(color, &bmp_back);
+	//å°†ç”»å¸ƒè´´åˆ°ç»˜å›¾è®¾å¤‡ä¸Š
+	SelectObject(mem_dc, bmp_back);
+	//å¤åˆ¶åˆ°ç³»ç»Ÿè®¾å¤‡ä¸Šæ˜¾ç¤º  
+	bool success = BitBlt(hdc, 0, 0, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight(), mem_dc, 0, 0, SRCCOPY);
+	DeleteObject(bmp_back);//é‡Šæ”¾ä½å›¾èµ„æºÂ Â 
+	DeleteDC(mem_dc);//é‡Šæ”¾è¾…åŠ©ç»˜å›¾è®¾å¤‡Â Â 
+	ReleaseDC(hwnd_, hdc);//å½’è¿˜ç³»ç»Ÿç»˜å›¾è®¾å¤‡
 }

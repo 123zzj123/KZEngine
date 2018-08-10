@@ -51,6 +51,9 @@ void KZObject::RotationMatrix(const KZMath::KZMatrix44& matrix) {
 		vlist_local_[i].pos = matrix * vlist_local_[i].pos;
 		vlist_local_[i].normal = matrix * vlist_local_[i].normal;
 	}
+	for (uint32_t i = 0; i < num_index_ / 3; ++i) {
+		face_normal_[i] = matrix * face_normal_[i];
+	}
 	ux_ = matrix * ux_;
 	uy_ = matrix * uy_;
 	uz_ = matrix * uz_;

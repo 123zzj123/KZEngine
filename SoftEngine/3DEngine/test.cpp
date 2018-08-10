@@ -93,26 +93,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT pt_str;
 		//获得系统绘图设备  
 		HDC hdc = BeginPaint(hwnd, &pt_str);
-		//创建辅助绘图设备  
-		HDC mem_dc = CreateCompatibleDC(hdc);
-		uint32_t w = KZEngine::KZPipeLine::GetInstance()->GetWindowWidth();
-		uint32_t h = KZEngine::KZPipeLine::GetInstance()->GetWindowHeight();
-
-		Gdiplus::Color color(255, 255, 255, 255);
-
-		//创建GDI掩码位图（画布）
-		HBITMAP bmp_back = CreateCompatibleBitmap(hdc, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight());
-
-		//创建GDI+掩码位图（画布）
-		Gdiplus::Bitmap bitmap(w, h, 3 * w, PixelFormat24bppRGB, (BYTE*)KZEngine::KZPipeLine::GetInstance()->GetFrameBuffer());
-		bitmap.GetHBITMAP(color,&bmp_back);
-		//将画布贴到绘图设备上
-		SelectObject(mem_dc, bmp_back);
-		//复制到系统设备上显示  
-		bool success = BitBlt(hdc, 0, 0, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight(), mem_dc, 0, 0, SRCCOPY);
-		DeleteObject(bmp_back);//释放位图资源  
-		DeleteDC(mem_dc);//释放辅助绘图设备  
-		ReleaseDC(hwnd, hdc);//归还系统绘图设备
+		
 
 		EndPaint(hwnd, &pt_str);
 		break;

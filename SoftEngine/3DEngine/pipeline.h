@@ -29,11 +29,6 @@ namespace KZEngine {
 		//删除单实例
 		static void DeleteInstance() {
 			if (p_instance_) {
-				for (uint32_t i = 0; i < p_instance_->view_width_; ++i) {
-					delete[] p_instance_->z_buffer_[i];
-				}
-				delete[] p_instance_->z_buffer_;
-				delete[] p_instance_->frame_buffer_;
 				delete p_instance_;
 			}
 		}
@@ -90,6 +85,8 @@ namespace KZEngine {
 		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
 		//光栅化平顶三角形
 		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		//双缓冲交换
+		void SwapBuffer();
 	private:
 		//光源数组
 		vector<LightBase*> light_vec_;
@@ -126,6 +123,8 @@ namespace KZEngine {
 		static KZPipeLine* p_instance_;
 		//构造函数
 		KZPipeLine();
+		//析构函数
+		~KZPipeLine();
 		//增加材质
 		void AddMaterial(const KZEngine::KZMaterial &);
 	};

@@ -250,10 +250,10 @@ void KZMatrix44::RotationXInverse() {
 //返回绕x轴旋转矩阵
 void KZMatrix44::RotationX(float angle) {
 	Identity();
-	m11_ = cos(angle);
-	m12_ = -sin(angle);
-	m21_ = sin(angle);
-	m22_ = cos(angle);
+	m11_ = cos(KZMath::AngleToRadian(angle));
+	m12_ = -sin(KZMath::AngleToRadian(angle));
+	m21_ = sin(KZMath::AngleToRadian(angle));
+	m22_ = cos(KZMath::AngleToRadian(angle));
 	return;
 }
 
@@ -284,27 +284,27 @@ void KZMatrix44::RotationZInverse() {
 //返回绕z轴旋转矩阵
 void KZMatrix44::RotationZ(float angle) {
 	Identity();
-	m00_ = cos(angle);
-	m01_ = -sin(angle);
-	m10_ = sin(angle);
-	m11_ = cos(angle);
+	m00_ = cos(KZMath::AngleToRadian(angle));
+	m01_ = -sin(KZMath::AngleToRadian(angle));
+	m10_ = sin(KZMath::AngleToRadian(angle));
+	m11_ = cos(KZMath::AngleToRadian(angle));
 	return;
 }
 
 //返回绕任意轴旋转矩阵:推导绕x轴旋转到YOZ平面，绕y轴旋转到z轴，绕z轴旋转angle，一二步骤逆操作
 void KZMatrix44::RotationAxis(const KZVector4D& axis, float angle) {
 	Identity();
-	m00_ = cos(angle) + axis.x_ * axis.x_ * (1 - cos(angle));
-	m01_ = axis.x_ * axis.y_ * (1 - cos(angle)) - axis.z_ * sin(angle);
-	m02_ = axis.x_ * axis.z_ * (1 - cos(angle)) + axis.y_ * sin(angle);
+	m00_ = cos(KZMath::AngleToRadian(angle)) + axis.x_ * axis.x_ * (1 - cos(KZMath::AngleToRadian(angle)));
+	m01_ = axis.x_ * axis.y_ * (1 - cos(KZMath::AngleToRadian(angle))) - axis.z_ * sin(KZMath::AngleToRadian(angle));
+	m02_ = axis.x_ * axis.z_ * (1 - cos(KZMath::AngleToRadian(angle))) + axis.y_ * sin(KZMath::AngleToRadian(angle));
 
-	m10_ = axis.x_ * axis.y_ * (1 - cos(angle)) + axis.z_ * sin(angle);
-	m11_ = cos(angle) + axis.y_ * axis.y_ * (1 - cos(angle));
-	m12_ = axis.y_ * axis.z_ * (1 - cos(angle)) - axis.x_ * sin(angle);
+	m10_ = axis.x_ * axis.y_ * (1 - cos(KZMath::AngleToRadian(angle))) + axis.z_ * sin(KZMath::AngleToRadian(angle));
+	m11_ = cos(KZMath::AngleToRadian(angle)) + axis.y_ * axis.y_ * (1 - cos(KZMath::AngleToRadian(angle)));
+	m12_ = axis.y_ * axis.z_ * (1 - cos(KZMath::AngleToRadian(angle))) - axis.x_ * sin(KZMath::AngleToRadian(angle));
 
-	m20_ = axis.x_ * axis.z_ * (1 - cos(angle)) - axis.y_ * sin(angle);
-	m21_ = axis.y_ * axis.z_ * (1 - cos(angle)) + axis.x_ * sin(angle);
-	m22_ = cos(angle) + axis.z_ * axis.z_ * (1 - cos(angle));
+	m20_ = axis.x_ * axis.z_ * (1 - cos(KZMath::AngleToRadian(angle))) - axis.y_ * sin(KZMath::AngleToRadian(angle));
+	m21_ = axis.y_ * axis.z_ * (1 - cos(KZMath::AngleToRadian(angle))) + axis.x_ * sin(KZMath::AngleToRadian(angle));
+	m22_ = cos(KZMath::AngleToRadian(angle)) + axis.z_ * axis.z_ * (1 - cos(KZMath::AngleToRadian(angle)));
 	
 	return;
 }
