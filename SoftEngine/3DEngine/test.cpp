@@ -2,6 +2,14 @@
 #include<math.h>
 #include <objidl.h>
 #include <gdiplus.h>
+
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#ifdef _DEBUG
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+
 #include"pipeline.h"
 using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
@@ -178,5 +186,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	//关闭gdi+
 	GdiplusShutdown(gdi_plus_token);
+	_CrtDumpMemoryLeaks();
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 	return msg.wParam;
 }

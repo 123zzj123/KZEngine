@@ -68,9 +68,9 @@ namespace KZEngine {
 		KZCamera main_camera_;
 	protected:
 		//物体消除，包围球测试
-		void CullObject();
+		void OcclusionCulling();
 		//背面消除
-		void RemoveBackface();
+		void BackfaceCulling();
 		//转化到世界坐标
 		void TransformModelToWorld();
 		//转化到相机坐标

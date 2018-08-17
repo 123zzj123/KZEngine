@@ -34,11 +34,15 @@ Color KZMaterial::GetTextureColor(float s, float t) {
 	uint32_t x, y;
 	uint32_t width = bitmap_.GetHeight();
 	uint32_t height = bitmap_.GetWidth();
-	x = s * (width - 1);
-	y = t * (height - 1);
-	KZPixel pixel;
-	bitmap_.GetPixel(x, y, pixel);
 	Color result;
-	result.Set(pixel.red, pixel.green, pixel.blue);
-	return result;
+	if (width == 0 || height == 0) {
+		return result;
+	}
+	else
+	{
+		x = s * (width - 1);
+		y = t * (height - 1);
+		bitmap_.GetPixel(x, y, result);
+		return result;
+	}
 }

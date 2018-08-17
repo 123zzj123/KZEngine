@@ -212,7 +212,7 @@ void KZPipeLine::CreatePyramid() {
 }
 
 //物体消除，包围球测试
-void KZPipeLine::CullObject() {
+void KZPipeLine::OcclusionCulling() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		//根据远近平面裁剪
 		if ((object_vec_[i].world_pos_.z_ + object_vec_[i].max_radius_ < main_camera_.GetCameraFarClip()) || (object_vec_[i].world_pos_.z_ - object_vec_[i].max_radius_ > main_camera_.GetCameraNearClip())) {
@@ -237,7 +237,7 @@ void KZPipeLine::CullObject() {
 }
 
 //背面消除
-void KZPipeLine::RemoveBackface() {
+void KZPipeLine::BackfaceCulling() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		if (object_active_[i]) {
 			for (uint32_t j = 0; j < object_vec_[i].num_index_; j += 3) {
@@ -341,8 +341,8 @@ void KZPipeLine::FrameUpdate() {
 
 	//固定管线
 	TransformModelToWorld();
-	CullObject();
-	RemoveBackface();
+	OcclusionCulling();
+	BackfaceCulling();
 	TransformWorldToPer();
 	TransformPerToViewPort();
 	RasterizationDepthTest();
@@ -1024,25 +1024,18 @@ void KZPipeLine::ChangeLight(uint32_t light_index) {
 
 //双缓冲交换
 void KZPipeLine::SwapBuffer() {
-	HDC hdc = GetDC(hwnd_);
-	//创建辅助绘图设备  
-	HDC mem_dc = CreateCompatibleDC(hdc);
+	RECT rc;
+	GetClientRect(hwnd_, &rc);
 	uint32_t w = KZEngine::KZPipeLine::GetInstance()->GetWindowWidth();
 	uint32_t h = KZEngine::KZPipeLine::GetInstance()->GetWindowHeight();
-
-	Gdiplus::Color color(255, 255, 255, 255);
-
-	//创建GDI掩码位图（画布）
-	HBITMAP bmp_back = CreateCompatibleBitmap(hdc, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight());
-
 	//创建GDI+掩码位图（画布）
 	Gdiplus::Bitmap bitmap(w, h, 3 * w, PixelFormat24bppRGB, (BYTE*)KZEngine::KZPipeLine::GetInstance()->GetFrameBuffer());
-	bitmap.GetHBITMAP(color, &bmp_back);
-	//将画布贴到绘图设备上
-	SelectObject(mem_dc, bmp_back);
-	//复制到系统设备上显示  
-	bool success = BitBlt(hdc, 0, 0, KZEngine::KZPipeLine::GetInstance()->GetWindowWidth(), KZEngine::KZPipeLine::GetInstance()->GetWindowHeight(), mem_dc, 0, 0, SRCCOPY);
-	DeleteObject(bmp_back);//释放位图资源  
-	DeleteDC(mem_dc);//释放辅助绘图设备  
-	ReleaseDC(hwnd_, hdc);//归还系统绘图设备
+	Gdiplus::Graphics bmp_graphics(&bitmap);
+	bmp_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
+	HDC hdc = GetDC(hwnd_);
+	Gdiplus::Graphics graphics(hdc);
+	Gdiplus::CachedBitmap cachedBmp(&bitmap, &graphics);
+	graphics.DrawCachedBitmap(&cachedBmp, 0, 0);
+	ReleaseDC(hwnd_, hdc);
 }
