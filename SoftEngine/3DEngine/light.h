@@ -5,6 +5,21 @@
 #include"../KZMath/vector.h"
 
 namespace KZEngine {
+	typedef struct FixedColorTyp
+	{
+	public:
+		inline void Set(int32_t r = 0, int32_t g = 0, int32_t b = 0, int32_t a = 255) {
+			r_ = r;
+			g_ = g;
+			b_ = b;
+			a_ = a;
+		}
+	public:
+		int32_t r_;
+		int32_t g_;
+		int32_t b_;
+		int32_t a_;
+	}FixColor, *FixColorPtr;
 	typedef struct ColorTyp {
 	public:
 		struct
@@ -57,9 +72,9 @@ namespace KZEngine {
 		//获取光照类型
 		LightType GetType() { return type_; }
 		//获取光照强度
-		virtual Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		virtual Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
-		virtual KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D());
+		virtual KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>());
 	protected:
 		LightType type_;
 		Color light_colr_;
@@ -70,14 +85,14 @@ namespace KZEngine {
 	{
 	public:
 		//平行光构造函数
-		DirectionLight(const Color& color, const KZMath::KZVector4D& dir) :LightBase(color), dir_(dir) { type_ = LightType::DIRECTION; }
+		DirectionLight(const Color& color, const KZMath::KZVector4D<float>& dir) :LightBase(color), dir_(dir) { type_ = LightType::DIRECTION; }
 		//计算光照强度
-		Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
-		KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos);
+		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
 	private:
 		//光源方向
-		KZMath::KZVector4D dir_;
+		KZMath::KZVector4D<float> dir_;
 	};
 
 	//点光源
@@ -85,16 +100,16 @@ namespace KZEngine {
 	{
 	public:
 		//点光源构造函数
-		PointLight(const Color& color, const KZMath::KZVector4D& pos, float kc, float kl, float kq) :LightBase(color), pos_(pos), kc_(kc), kl_(kl), kq_(kq) { type_ = LightType::POINT; }
+		PointLight(const Color& color, const KZMath::KZVector4D<float>& pos, float kc, float kl, float kq) :LightBase(color), pos_(pos), kc_(kc), kl_(kl), kq_(kq) { type_ = LightType::POINT; }
 		//计算光源强度
-		Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
-		KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos);
+		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
 		//获取光源位置
-		inline KZMath::KZVector4D GetLightPos() { return pos_; };
+		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
 	private:
 		//光源位置
-		KZMath::KZVector4D pos_;
+		KZMath::KZVector4D<float> pos_;
 		//常数衰减因子
 		float kc_;
 		//线性衰减因子
@@ -110,19 +125,19 @@ namespace KZEngine {
 	{
 	public:
 		//简单聚光灯构造函数
-		SimpleSpotLight(const Color& color, const KZMath::KZVector4D& pos, const KZMath::KZVector4D& dir, float kc, float kl, float kq, float pf) :
+		SimpleSpotLight(const Color& color, const KZMath::KZVector4D<float>& pos, const KZMath::KZVector4D<float>& dir, float kc, float kl, float kq, float pf) :
 			LightBase(color), pos_(pos), dir_(dir), kc_(kc), kl_(kl), kq_(kq){ type_ = LightType::SSPOT; }
 		//计算光源强度
-		Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
-		KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos);
+		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
 		//获取光源位置
-		inline KZMath::KZVector4D GetLightPos() { return pos_; };
+		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
 	private:
 		//光源位置
-		KZMath::KZVector4D pos_;
+		KZMath::KZVector4D<float> pos_;
 		//光源方向
-		KZMath::KZVector4D dir_;
+		KZMath::KZVector4D<float> dir_;
 		//常数衰减因子
 		float kc_;
 		//线性衰减因子
@@ -138,19 +153,19 @@ namespace KZEngine {
 	{
 	public:
 		//复杂聚光灯构造函数
-		ComplexSpotLight(const Color& color, const KZMath::KZVector4D& pos, const KZMath::KZVector4D& dir, float spot_inner_angle, float spot_outter_angle, float kc, float kl, float kq, float pf) :
+		ComplexSpotLight(const Color& color, const KZMath::KZVector4D<float>& pos, const KZMath::KZVector4D<float>& dir, float spot_inner_angle, float spot_outter_angle, float kc, float kl, float kq, float pf) :
 			LightBase(color), pos_(pos), dir_(dir), spot_inner_angle_(spot_inner_angle), spot_outter_angle_(spot_outter_angle), kc_(kc), kl_(kl), kq_(kq), pf_(pf) { type_ = LightType::CSPOT; }
 		//计算光源强度
-		Color CalculateLightIntensity(const KZMath::KZVector4D& vertex_pos = KZMath::KZVector4D(), const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D());
+		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
-		KZMath::KZVector4D GetLightVec(const KZMath::KZVector4D& vertex_pos);
+		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
 		//获取光源位置
-		inline KZMath::KZVector4D GetLightPos() { return pos_; };
+		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
 	private:
 		//光源位置
-		KZMath::KZVector4D pos_;
+		KZMath::KZVector4D<float> pos_;
 		//光源方向
-		KZMath::KZVector4D dir_;
+		KZMath::KZVector4D<float> dir_;
 		//聚光灯内锥角
 		float spot_inner_angle_;
 		//聚光灯外锥角

@@ -14,13 +14,34 @@ namespace KZEngine {
 	{
 	public:
 		//构造函数
-		KZMaterial(const Color& color, const std::string& texture_path, float ka, float kd, float ks, float power);
-		//析构函数
-		~KZMaterial();
+		KZMaterial(const Color& color, const std::string& texture_path, float ka, float kd, float ks, uint32_t power);
+		////拷贝构造函数
+		//KZMaterial(const KZMaterial& other);
+		////析构函数
+		//~KZMaterial();
 		//计算光照最终颜色
-		Color CalculateFinalColor(LightBase* light, const KZMath::KZVector4D& vertex_pos, const KZMath::KZVector4D& vertex_normal = KZMath::KZVector4D(), const KZMath::KZVector4D& camera_pos = KZMath::KZVector4D());
+		Color CalculateFinalColor(LightBase* light, const KZMath::KZVector4D<float>& vertex_pos, const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& camera_pos = KZMath::KZVector4D<float>());
 		//获取贴图颜色
 		Color GetTextureColor(float s, float t);
+		//获取材质贴图
+		inline uint32_t GetBitMapWidth()
+		{
+			return bitmap_.GetWidth();
+		}
+		inline uint32_t GetBitMapHeight()
+		{
+			return bitmap_.GetHeight();
+		}
+		inline bool operator<(const KZMaterial& other)const {
+			if (id_ == other.id_)
+			{
+				return false;
+			}
+			else
+			{
+				return id_ < other.id_;
+			}
+		}
 		//材质的id
 		uint32_t id_;
 		//是否有贴图
@@ -37,7 +58,7 @@ namespace KZEngine {
 		//镜面反射系数
 		float ks_;
 		//镜面光权值
-		float power_;
+		int power_;
 		//贴图数据
 		KZImage bitmap_;
 	};

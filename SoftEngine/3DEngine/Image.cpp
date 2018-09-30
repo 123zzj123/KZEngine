@@ -6,7 +6,7 @@ KZImage::KZImage(const std::string& file_name) {
 	//判断字符串是否为空
 	assert(file_name != "");
 	//判断文件存在且格式正确
-	if (CheckFile(file_name)) {
+	if (true) {
 		std::wstring infilename = StringToWString(file_name);
 		//读图片
 		Gdiplus::Bitmap* bmp = new Gdiplus::Bitmap(infilename.c_str());
@@ -31,6 +31,21 @@ KZImage::KZImage(const std::string& file_name) {
 		pixel_ = NULL;
 		width_ = 0;
 		height_ = 0;
+	}
+}
+
+//拷贝构造函数
+KZImage::KZImage(const KZImage& other)
+{
+	this->width_ = other.width_;
+	this->height_ = other.height_;
+	this->pixel_ = new Color[height_ * width_];
+	uint32_t cur_idx = 0;
+	for (uint32_t i = 0; i < height_; ++i) {
+		for (uint32_t j = 0; j < width_; ++j) {
+			pixel_[cur_idx] = other.pixel_[cur_idx];
+			++cur_idx;
+		}
 	}
 }
 

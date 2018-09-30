@@ -10,7 +10,7 @@ KZMatrix44::KZMatrix44() {
 }
 
 //构造函数
-KZMatrix44::KZMatrix44(const KZVector4D& v1, const KZVector4D& v2, const KZVector4D& v3, const KZVector4D& v4) {
+KZMatrix44::KZMatrix44(const KZVector4D<float>& v1, const KZVector4D<float>& v2, const KZVector4D<float>& v3, const KZVector4D<float>& v4) {
 	m_[0][0] = v1.x_;
 	m_[0][1] = v1.y_;
 	m_[0][2] = v1.z_;
@@ -45,13 +45,13 @@ KZMatrix44::KZMatrix44(const float* pArray) {
 KZMatrix44 KZMatrix44::operator*(const KZMatrix44& nm) const{
 	KZMatrix44 m1;
 	for (uint32_t i = 0; i < 4; ++i) {
-		KZVector4D row;
+		KZVector4D<float> row;
 		row.x_ = m_[i][0];
 		row.y_ = m_[i][1];
 		row.z_ = m_[i][2];
 		row.w_ = m_[i][3];
 		for (uint32_t j = 0; j < 4; ++j) {
-			KZVector4D col;
+			KZVector4D<float> col;
 			col.x_ = nm.m_[0][j];
 			col.y_ = nm.m_[1][j];
 			col.z_ = nm.m_[2][j];
@@ -63,8 +63,8 @@ KZMatrix44 KZMatrix44::operator*(const KZMatrix44& nm) const{
 }
 
 //矩阵与向量乘法
-KZVector4D KZMatrix44::operator*(const KZVector4D& nv) const{
-	KZVector4D res_vec;
+KZVector4D<float> KZMatrix44::operator*(const KZVector4D<float>& nv) const{
+	KZVector4D<float> res_vec;
 	res_vec.x_ = v1_ * nv;
 	res_vec.y_ = v2_ * nv;
 	res_vec.z_ = v3_ * nv;
@@ -76,13 +76,13 @@ KZVector4D KZMatrix44::operator*(const KZVector4D& nv) const{
 void KZMatrix44::operator*=(const KZMatrix44& nm) {
 	KZMatrix44 m1;
 	for (uint32_t i = 0; i < 4; ++i) {
-		KZVector4D row;
+		KZVector4D<float> row;
 		row.x_ = m_[i][0];
 		row.y_ = m_[i][1];
 		row.z_ = m_[i][2];
 		row.w_ = m_[i][3];
 		for (uint32_t j = 0; j < 4; ++j) {
-			KZVector4D col;
+			KZVector4D<float> col;
 			col.x_ = nm.m_[0][j];
 			col.y_ = nm.m_[1][j];
 			col.z_ = nm.m_[2][j];
@@ -209,9 +209,10 @@ void KZMatrix44::Inverse(KZMatrix44& matrix) const{
 		return ;
 	}
 	Adjoint(matrix);
+	float one_over_det = 1 / det;
 	for (uint32_t i = 0; i < order; ++i) {
 		for (uint32_t j = 0; j < order; ++j) {
-			matrix.m_[i][j] /= det;
+			matrix.m_[i][j] *= one_over_det;
 		}
 	}
 	return;
@@ -292,7 +293,7 @@ void KZMatrix44::RotationZ(float angle) {
 }
 
 //返回绕任意轴旋转矩阵:推导绕x轴旋转到YOZ平面，绕y轴旋转到z轴，绕z轴旋转angle，一二步骤逆操作
-void KZMatrix44::RotationAxis(const KZVector4D& axis, float angle) {
+void KZMatrix44::RotationAxis(const KZVector4D<float>& axis, float angle) {
 	Identity();
 	m00_ = cos(KZMath::AngleToRadian(angle)) + axis.x_ * axis.x_ * (1 - cos(KZMath::AngleToRadian(angle)));
 	m01_ = axis.x_ * axis.y_ * (1 - cos(KZMath::AngleToRadian(angle))) - axis.z_ * sin(KZMath::AngleToRadian(angle));
@@ -327,7 +328,7 @@ void KZMatrix44::Translation(float x, float y, float z) {
 }
 
 //返回平移矩阵(vector)
-void KZMatrix44::Translation(const KZVector4D& offset) {
+void KZMatrix44::Translation(const KZVector4D<float>& offset) {
 	Identity();
 	m03_ = offset.x_;
 	m13_ = offset.y_;
@@ -353,7 +354,7 @@ void KZMatrix44::Scaling(float scale_x, float scale_y, float scale_z) {
 }
 
 //返回缩放矩阵(vector)
-void KZMatrix44::Scaling(const KZVector4D& scale) {
+void KZMatrix44::Scaling(const KZVector4D<float>& scale) {
 	Identity();
 	m00_ = scale.x_;
 	m11_ = scale.y_;

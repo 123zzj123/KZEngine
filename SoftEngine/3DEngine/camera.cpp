@@ -2,7 +2,7 @@
 using namespace KZEngine;
 
 //构造函数
-KZCamera::KZCamera(const KZMath::KZVector4D& pos, float fov, float aspect, float near, float far) :n_(KZMath::KZVector4D(0, 0, -1, 0)), movement_speed_(kSpeed), mouse_sensity_(kSensitivity),yaw_(kYaw),pitch_(kPitch) {
+KZCamera::KZCamera(const KZMath::KZVector4D<float>& pos, float fov, float aspect, float near, float far) :n_(KZMath::KZVector4D<float>(0, 0, -1, 0)), movement_speed_(kSpeed), mouse_sensity_(kSensitivity),yaw_(kYaw),pitch_(kPitch) {
 	pos_ = pos;
 	fov_ = fov;
 	aspect_ratio_ = aspect;
@@ -26,7 +26,7 @@ KZCamera::KZCamera(const KZMath::KZVector4D& pos, float fov, float aspect, float
 
 //获取相机变换矩阵
 void KZCamera::GetViewMatrix(KZMath::KZMatrix44& matrix) {
-	KZMath::KZVector4D t_vec = -pos_;
+	KZMath::KZVector4D<float> t_vec = -pos_;
 	matrix.Identity();
 	matrix.m00_ = u_.x_;
 	matrix.m01_ = u_.y_;

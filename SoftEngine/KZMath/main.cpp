@@ -3,10 +3,10 @@
 #include"quat.h"
 
 int main() {
-	KZMath::KZVector4D v1(1, 2, 1, 1);
-	KZMath::KZVector4D v2(2, 1, 1, 1);
-	KZMath::KZVector4D v3(3, 1, 1, 2);
-	KZMath::KZVector4D v4;
+	KZMath::KZVector4D<float> v1(1, 2, 1, 1);
+	KZMath::KZVector4D<float> v2(2, 1, 1, 1);
+	KZMath::KZVector4D<float> v3(3, 1, 1, 2);
+	KZMath::KZVector4D<float> v4;
 	KZMath::KZMatrix44 matrix1(v1, v2, v3, v4);
 	KZMath::KZMatrix44 matrix3 = KZMath::KZMatrix44();
 	cout << matrix1 << endl;

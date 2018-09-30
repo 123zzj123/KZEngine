@@ -28,7 +28,7 @@ void KZObject::TransformModelToWorldMath() {
 }
 
 //通过矩阵缩放
-void KZObject::ScaleMatrix(const KZMath::KZVector4D& vector) {
+void KZObject::ScaleMatrix(const KZMath::KZVector4D<float>& vector) {
 	KZMath::KZMatrix44 transform;
 	transform.Scaling(vector);
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
@@ -38,7 +38,7 @@ void KZObject::ScaleMatrix(const KZMath::KZVector4D& vector) {
 }
 
 //通过数学公式缩放
-void KZObject::ScaleMath(const KZMath::KZVector4D& vector) {
+void KZObject::ScaleMath(const KZMath::KZVector4D<float>& vector) {
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		vlist_local_[i].pos *= vector;
 	}
@@ -51,7 +51,7 @@ void KZObject::RotationMatrix(const KZMath::KZMatrix44& matrix) {
 		vlist_local_[i].pos = matrix * vlist_local_[i].pos;
 		vlist_local_[i].normal = matrix * vlist_local_[i].normal;
 	}
-	for (uint32_t i = 0; i < num_index_ / 3; ++i) {
+	for (uint32_t i = 0; i < num_face_; ++i) {
 		face_normal_[i] = matrix * face_normal_[i];
 	}
 	ux_ = matrix * ux_;
@@ -74,6 +74,13 @@ void KZObject::RotationQuat(const KZMath::KZQuat& quat) {
 		vlist_local_[i].pos.y_ = ans_quat.y_;
 		vlist_local_[i].pos.z_ = ans_quat.z_;
 	}
+	for (uint32_t i = 0; i < num_face_; ++i) {
+		temp_quat.Set(0, face_normal_[i].x_, face_normal_[i].y_, face_normal_[i].z_);
+		quat.TripleProduct(temp_quat, quat_conj, ans_quat);
+		face_normal_[i].x_ = ans_quat.x_;
+		face_normal_[i].y_ = ans_quat.y_;
+		face_normal_[i].z_ = ans_quat.z_;
+	}
 	temp_quat.x_ = ux_.x_;
 	temp_quat.y_ = ux_.y_;
 	temp_quat.z_ = ux_.z_;
@@ -93,15 +100,14 @@ void KZObject::CalculateRadian() {
 
 //预先计算面法线和顶点法线
 void KZObject::CalculateNormal(bool need_vertex) {
-	uint32_t face_num = num_index_ / 3;
-	face_normal_.reserve(face_num);
+	face_normal_.reserve(num_face_);
 	uint32_t* poly_vertex = new uint32_t[num_vertices_]();
 	for (uint32_t i = 0; i < num_index_; i += 3) {
-		KZMath::KZVector4D vec1 = vlist_local_[index_[i + 1]].pos - vlist_local_[index_[i]].pos;
+		KZMath::KZVector4D<float> vec1 = vlist_local_[index_[i + 1]].pos - vlist_local_[index_[i]].pos;
 		vec1.w_ = 0;
-		KZMath::KZVector4D vec2 = vlist_local_[index_[i + 2]].pos - vlist_local_[index_[i + 1]].pos;
+		KZMath::KZVector4D<float> vec2 = vlist_local_[index_[i + 2]].pos - vlist_local_[index_[i + 1]].pos;
 		vec2.w_ = 0;
-		KZMath::KZVector4D face_normal;
+		KZMath::KZVector4D<float> face_normal;
 		vec1.Vector3Cross(face_normal, vec2);
 		face_normal_.push_back(face_normal);
 		if (need_vertex) {
@@ -115,7 +121,7 @@ void KZObject::CalculateNormal(bool need_vertex) {
 	}
 	if (need_vertex) {
 		for (uint32_t i = 0; i < num_vertices_; ++i) {
-			vlist_local_[i].normal /= poly_vertex[i];
+			vlist_local_[i].normal /= (float)poly_vertex[i];
 			vlist_local_[i].normal.Vector3Normalize();
 		}
 	}

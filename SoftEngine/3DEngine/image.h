@@ -15,7 +15,9 @@ namespace KZEngine {
 	{
 	public:
 		//构造函数
-		KZImage(const std::string& file_name);
+		KZImage(const std::string& file_name = "");
+		//拷贝构造函数
+		KZImage(const KZImage& other);
 		//析构函数
 		~KZImage();
 		//获取宽度
@@ -23,7 +25,9 @@ namespace KZEngine {
 		//获取高度
 		inline uint32_t GetHeight() { return height_; }
 		//获取指定位置像素
-		void GetPixel(uint32_t x, uint32_t y, Color& pixel) { pixel = pixel_[y * width_ + x]; }
+		inline void GetPixel(uint32_t x, uint32_t y, Color& pixel) { pixel = pixel_[y * width_ + x]; }
+		//获取指定位置单通道的颜色值
+		inline void GetSingleChannelColor(uint32_t x, uint32_t y, uint32_t& value) { value = (uint32_t)pixel_[y * width_ + x].r_; }
 	private:
 		//将string转wstring
 		std::wstring StringToWString(const std::string& str);

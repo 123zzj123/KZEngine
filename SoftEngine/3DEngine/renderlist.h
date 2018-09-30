@@ -7,7 +7,7 @@ namespace KZEngine {
 	//三角形结构体
 	typedef struct TriangleType{
 		Vertex vertex_list[3];
-		KZMath::KZVector4D face_normal;
+		KZMath::KZVector4D<float> face_normal;
 		uint32_t material = -1;
 	}Triangle, *TrianglePtr;
 
@@ -36,6 +36,8 @@ namespace KZEngine {
 		uint32_t num_poly_;
 		//三角形列表
 		vector<Triangle> tri_list_;
+		//活跃三角形列表,裁剪标识
+		vector<bool> active_tri_;
 	private:
 		static KZRenderList* r_instance_;
 		KZRenderList() {};

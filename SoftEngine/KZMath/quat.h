@@ -3,6 +3,7 @@
 #define KZ_QUAT
 
 #include<cmath>
+#include "vector.h"
 #include<iostream>
 #include "util.h"
 
@@ -27,6 +28,20 @@ namespace KZMath {
 		//四元数乘法
 		KZQuat operator*(const KZQuat& other) const;
 		//设置函数
+		inline bool operator == (const KZQuat& other) const  {
+			if (w_ == other.w_ && x_ == other.x_ && y_ == other.y_ && z_ == other.z_)
+			{
+				return true;
+			}
+			return false;
+		}
+		inline bool operator != (const KZQuat& other) const {
+			if (w_ != other.w_ || x_ != other.x_ || y_ != other.y_ || z_ != other.z_)
+			{
+				return true;
+			}
+			return false;
+		}
 		void Set(float w = 0.0f, float x = 0.0f, float y = 0.0f, float z = 0.0f);
 		//根据旋转轴，旋转角度得到四元数
 		void SetFromVector3DTheta(const KZVector3D& axis, float angle);
@@ -44,6 +59,9 @@ namespace KZMath {
 		void Normalize();
 		//3个四元数相乘，用于旋转
 		void TripleProduct(const KZQuat& q2, const KZQuat& q3, KZQuat& quat_result) const;
+
+	public:
+		static const KZQuat ZERO;
 	public:
 		union
 		{

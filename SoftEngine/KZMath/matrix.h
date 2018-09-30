@@ -13,12 +13,12 @@ namespace KZMath {
 	public:
 		KZMatrix44();
 		//构造函数
-		KZMatrix44(const KZVector4D& v1, const KZVector4D& v2, const KZVector4D& v3, const KZVector4D& v4);
+		KZMatrix44(const KZVector4D<float>& v1, const KZVector4D<float>& v2, const KZVector4D<float>& v3, const KZVector4D<float>& v4);
 		KZMatrix44(const float* pArray);
 		//矩阵乘法返回矩阵
 		KZMatrix44 operator*(const KZMatrix44& nm) const;
 		//矩阵与向量乘法
-		KZVector4D operator*(const KZVector4D& nv) const;
+		KZVector4D<float> operator*(const KZVector4D<float>& nv) const;
 		//矩阵乘法
 		void operator*=(const KZMatrix44& nm);
 		//矩阵拷贝
@@ -52,29 +52,29 @@ namespace KZMath {
 		//返回绕z轴旋转矩阵
 		void RotationZ(float angle);
 		//返回绕任意轴旋转矩阵
-		void RotationAxis(const KZVector4D& axis, float angle);
+		void RotationAxis(const KZVector4D<float>& axis, float angle);
 		//平移矩阵逆矩阵
 		void TranslationInverse();
 		//返回平移矩阵(float x,y,z)
 		void Translation(float x, float y, float z);
 		//返回平移矩阵(vector)
-		void Translation(const KZVector4D& offset);
+		void Translation(const KZVector4D<float>& offset);
 		//缩放矩阵逆矩阵
 		void ScalingInverse();
 		//返回缩放矩阵(float x,y,z)
 		void Scaling(float scale_x, float scale_y, float scale_z);
 		//返回缩放矩阵(vector)
-		void Scaling(const KZVector4D& scale);
+		void Scaling(const KZVector4D<float>& scale);
 	public:
 		union
 		{
 			float m_[4][4];
 			struct
 			{
-				KZVector4D v1_;
-				KZVector4D v2_;
-				KZVector4D v3_;
-				KZVector4D v4_;
+				KZVector4D<float> v1_;
+				KZVector4D<float> v2_;
+				KZVector4D<float> v3_;
+				KZVector4D<float> v4_;
 			};
 			struct
 			{

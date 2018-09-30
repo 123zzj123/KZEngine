@@ -1,6 +1,8 @@
 #include "quat.h"
 using namespace KZMath;
 
+const KZQuat KZQuat::ZERO = KZQuat(0, 0, 0, 0);
+
 //按照w,x,y,z初始化
 KZQuat::KZQuat(float w_in, float x_in, float y_in, float z_in) {
 	w_ = w_in;
@@ -24,6 +26,7 @@ ostream & KZMath::operator<<(ostream & o, KZQuat & v)
 
 //根据旋转轴，旋转角度得到四元数
 void KZQuat::SetFromVector3DTheta(const KZVector3D& axis, float angle) {
+	angle = KZMath::AngleToRadian(angle);
 	float half_angle = angle / 2;
 	float sin_theta = sin(half_angle);
 	x_ = sin_theta * axis.x_;

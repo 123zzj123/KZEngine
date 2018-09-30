@@ -2,12 +2,15 @@
 #ifndef KZ_PIPELINE
 #define KZ_PIPELINE
 
-#include<vector>;
 #include<windows.h>
+#include<vector>;
+#include"../KZMath/fix32.h"
 #include"object.h"
 #include"renderlist.h"
 #include"camera.h"
 #include"material.h"
+//#include<thread>
+//#include<mutex>
 
 namespace KZEngine {
 	enum Projection
@@ -39,9 +42,38 @@ namespace KZEngine {
 		//从文件中加载
 		void LoadFromFile();
 		//创建cube
-		void CreateCube();
+		void CreateCube(float width = 1.0f, float length = 1.0f, float height = 1.0f,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, -5), 
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
+			bool is_light = false);
+		//创建圆柱
+		void CreateCylinder(float top_radius, float bottom_radius, float height, uint32_t stack, uint32_t slice,
+			const KZEngine::Color& ini_color,
+			bool is_light = false,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0,0,0),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1));
+		//创建球体
+		void CreateSphere(float radius, uint32_t stack, uint32_t slice,
+			const KZEngine::Color& ini_color,
+			bool is_light = false,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, 0),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO,
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1));
 		//创建三棱锥
-		void CreatePyramid();
+		void CreatePyramid(const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(2, 0, -7), 
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
+			bool is_light = true);
+		//创建地形
+		void Create_Terrain(float width, float height, float vscale, 
+			const char* height_map_file_name, const char* texture_map_file_name, 
+			const KZEngine::Color& ini_color, 
+			bool is_light = false,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO
+			);
 		//改变光状态
 		void ChangeLight(uint32_t light_index);
 		//获取hwnd
@@ -66,11 +98,19 @@ namespace KZEngine {
 	public:
 		//主摄像机
 		KZCamera main_camera_;
+		//鼠标上一位置的x
+		int last_pos_x_;
+		//鼠标上一位置的y
+		int last_pos_y_;
+		//是否首次按下鼠标左键
+		bool first_mouse_;
 	protected:
 		//物体消除，包围球测试
 		void OcclusionCulling();
 		//背面消除
 		void BackfaceCulling();
+		//三角形裁剪
+		void PolyCulling();
 		//转化到世界坐标
 		void TransformModelToWorld();
 		//转化到相机坐标
@@ -79,12 +119,18 @@ namespace KZEngine {
 		void TransformPerToViewPort();
 		//初始化
 		void Initial();
-		//光栅化与深度测试
+		//浮点数版本光栅化与深度测试
 		void RasterizationDepthTest();
-		//光栅化平底三角形
+		//整数版本光栅化与深度测试
+		void RasterizationDepthTestFast();
+		//浮点数版本光栅化平底三角形
 		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
-		//光栅化平顶三角形
+		//整数版本光栅化平底三角形
+		void DrawBottomTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		//浮点数版本光栅化平顶三角形
 		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		//整数版本光栅化平顶三角形
+		void DrawTopTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
 		//双缓冲交换
 		void SwapBuffer();
 	private:
@@ -107,17 +153,24 @@ namespace KZEngine {
 		//对象积极
 		vector<bool> object_active_;
 		//深度缓冲
-		float** z_buffer_;
+		float* z_buffer_;
+		//失败的多线程光栅化
+		//mutex 缓冲
+		//mutex* mutex_buffer_;
 		//帧缓冲
 		unsigned char* frame_buffer_;
 		//渲染窗口句柄
 		HWND hwnd_;
 		//平均fps
 		float fps_;
+		//记录的fps数量
+		float fps_count_;
 		//fps记录时间
 		DWORD record_time_;
 		//材质数组
 		vector<KZEngine::KZMaterial> mat_vec_;
+		//对象id
+		uint32_t obj_id_ = 1;
 	private:
 		//单实例
 		static KZPipeLine* p_instance_;
@@ -126,7 +179,7 @@ namespace KZEngine {
 		//析构函数
 		~KZPipeLine();
 		//增加材质
-		void AddMaterial(const KZEngine::KZMaterial &);
+		uint32_t AddMaterial(const KZEngine::KZMaterial &);
 	};
 }
 #endif // !KZ_PIPELINE

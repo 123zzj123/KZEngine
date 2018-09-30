@@ -2,6 +2,7 @@
 #include<math.h>
 #include <objidl.h>
 #include <gdiplus.h>
+#include<windowsx.h>
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -82,9 +83,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		}
 		break;
 	}
+	case WM_RBUTTONDOWN:
+	{
+		if (!KZEngine::KZPipeLine::GetInstance()->first_mouse_) {
+			KZEngine::KZPipeLine::GetInstance()->first_mouse_ = true;
+			KZEngine::KZPipeLine::GetInstance()->last_pos_x_ = GET_X_LPARAM(lParam);
+			KZEngine::KZPipeLine::GetInstance()->last_pos_y_ = GET_Y_LPARAM(lParam);
+		}
+		break;
+	}
+	case WM_MOUSEMOVE:
+	{
+		if (KZEngine::KZPipeLine::GetInstance()->first_mouse_) 
+		{
+			int x_pos = GET_X_LPARAM(lParam);
+			int y_pos = GET_Y_LPARAM(lParam);
+			float x_offset = (float)(x_pos - KZEngine::KZPipeLine::GetInstance()->last_pos_x_);
+			float y_offset = (float)(y_pos - KZEngine::KZPipeLine::GetInstance()->last_pos_y_);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessMouseMovement(x_offset, y_offset);
+			KZEngine::KZPipeLine::GetInstance()->last_pos_x_ = x_pos;
+			KZEngine::KZPipeLine::GetInstance()->last_pos_y_ = y_pos;
+		}
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		KZEngine::KZPipeLine::GetInstance()->first_mouse_ = false;
+		break;
+	}
 	case WM_CREATE:
 	{
-		SetTimer(hwnd, 0, 16.6, NULL);
+		SetTimer(hwnd, 0, 20, NULL);
 		SetTimer(hwnd, 1, 1000, TimerProc);
 		return 0;
 		break;
@@ -101,8 +130,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT pt_str;
 		//获得系统绘图设备  
 		HDC hdc = BeginPaint(hwnd, &pt_str);
-		
-
 		EndPaint(hwnd, &pt_str);
 		break;
 	}
@@ -152,7 +179,7 @@ bool IniWindowClass(HINSTANCE hinst) {
 
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
 
-	return RegisterClassEx(&wndClass);
+	return (bool)RegisterClassEx(&wndClass);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow) {
@@ -163,9 +190,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	//开启gdi+
 	GdiplusStartup(&gdi_plus_token,&gdiplus_startup_input, NULL);
 
+	//KZMath::KZQuat quat;
+	//quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 0, 1), 90);
 	KZEngine::KZPipeLine* p_instance = KZEngine::KZPipeLine::GetInstance();
-	p_instance->CreateCube();
-	p_instance->CreatePyramid();
+	//p_instance->CreateCube();
+	p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), false, KZMath::KZVector4D<float>(0, 0, -5));
+	//p_instance->CreateCylinder(1.0f, 1.0f, 2.0f, 4, 8, KZEngine::Color(255, 255, 0), false, KZMath::KZVector4D<float>(0, -2, -2));
+	p_instance->Create_Terrain(10, 10, 4, "height_map_texture/cs1.bmp", "terrain_map_texture/terrain3.jpg", KZEngine::Color(255, 255, 255), false, KZMath::KZVector4D<float>(0, -4, -10), KZMath::KZQuat::ZERO);
+	//p_instance->CreatePyramid();
 	if (!IniWindowClass(hInstance)) {
 		return false;
 	}
@@ -188,5 +220,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	GdiplusShutdown(gdi_plus_token);
 	_CrtDumpMemoryLeaks();
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
-	return msg.wParam;
+	return (int)msg.wParam;
 }
