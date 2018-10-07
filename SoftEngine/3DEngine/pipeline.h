@@ -46,11 +46,13 @@ namespace KZEngine {
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, -5), 
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
 			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
-			bool is_light = false);
+			bool is_light = false,
+			float alpha = 1.0f);
 		//创建圆柱
 		void CreateCylinder(float top_radius, float bottom_radius, float height, uint32_t stack, uint32_t slice,
 			const KZEngine::Color& ini_color,
 			bool is_light = false,
+			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0,0,0),
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
 			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1));
@@ -58,6 +60,7 @@ namespace KZEngine {
 		void CreateSphere(float radius, uint32_t stack, uint32_t slice,
 			const KZEngine::Color& ini_color,
 			bool is_light = false,
+			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, 0),
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO,
 			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1));
@@ -65,12 +68,14 @@ namespace KZEngine {
 		void CreatePyramid(const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(2, 0, -7), 
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
 			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
-			bool is_light = true);
+			bool is_light = true,
+			float alpha = 1.0f);
 		//创建地形
 		void Create_Terrain(float width, float height, float vscale, 
 			const char* height_map_file_name, const char* texture_map_file_name, 
 			const KZEngine::Color& ini_color, 
 			bool is_light = false,
+			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO
 			);
@@ -103,7 +108,7 @@ namespace KZEngine {
 		//鼠标上一位置的y
 		int last_pos_y_;
 		//是否首次按下鼠标左键
-		bool first_mouse_;
+		bool first_mouse_ = false;
 	protected:
 		//物体消除，包围球测试
 		void OcclusionCulling();
@@ -124,11 +129,11 @@ namespace KZEngine {
 		//整数版本光栅化与深度测试
 		void RasterizationDepthTestFast();
 		//浮点数版本光栅化平底三角形
-		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//整数版本光栅化平底三角形
 		void DrawBottomTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
 		//浮点数版本光栅化平顶三角形
-		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//整数版本光栅化平顶三角形
 		void DrawTopTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
 		//双缓冲交换
@@ -144,19 +149,27 @@ namespace KZEngine {
 		uint32_t view_height_;
 		//物体数目
 		uint32_t object_num_;
+		//透明物体数量
+		uint32_t transparent_object_num_;
 		//三角形数量
 		uint32_t tri_num_;
-		//存储物体数组
+		//存储普通物体数组
 		vector<KZObject> object_vec_;
+		//存储透明物体数组
+		vector<KZObject> transparent_object_vec_;
 		//渲染队列
 		KZRenderList* render_list_;
 		//对象积极
 		vector<bool> object_active_;
+		//透明对象积极
+		vector<bool> transparent_object_active_;
 		//深度缓冲
 		float* z_buffer_;
+
 		//失败的多线程光栅化
 		//mutex 缓冲
 		//mutex* mutex_buffer_;
+		
 		//帧缓冲
 		unsigned char* frame_buffer_;
 		//渲染窗口句柄

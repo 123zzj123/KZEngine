@@ -67,6 +67,8 @@ namespace KZEngine {
 		vector<uint32_t> index_;
 		//是否光照计算
 		bool is_light_ = false;
+		//物体alpha属性
+		float alpha_ = 1.0f;
 		//材质id
 		vector<uint32_t> mat_id_;
 	private:

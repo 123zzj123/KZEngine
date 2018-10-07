@@ -3,12 +3,19 @@ cmake_minimum_required(VERSION 3.1.0)
 include_directories("${PROJECT_SOURCE_DIR}/3DEngine")
 
 set(SRCS
+	camera.h
 	camera.cpp
+	image.h
 	image.cpp
+	light.h
 	light.cpp
+	material.h
 	material.cpp
+	object.h
 	object.cpp
+	pipeline.h
 	pipeline.cpp
+	renderlist.h
 	renderlist.cpp
 	test.cpp
 )

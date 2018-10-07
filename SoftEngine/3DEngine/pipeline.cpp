@@ -31,8 +31,7 @@ void KZPipeLine::LoadFromFile() {
 
 //创建cube
 void KZPipeLine::CreateCube(float width, float length, float height, 
-	const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale, bool is_light) {
-	++object_num_;
+	const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale, bool is_light, float alpha) {
 	KZObject cube_obj;
 	//设置物体id
 	cube_obj.id_ = obj_id_;
@@ -45,8 +44,7 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 	cube_obj.uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
 	cube_obj.num_vertices_ = 8;
 	cube_obj.vlist_local_.reserve(cube_obj.num_vertices_);
-	//加入活跃物体列表
-	object_active_.push_back(true);
+	
 
 	//设置顶点的模型坐标
 	KZEngine::Vertex v1, v2, v3, v4, v5, v6, v7, v8;
@@ -151,7 +149,7 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 	cube_obj.CalculateRadian();
 	cube_obj.CalculateNormal();
 	string texture_path = "container.jpg";
-	KZEngine::KZMaterial cube_mat(Color(255, 255, 0), texture_path, 0.1f, 0.7f, 0.0f, 128);
+	KZEngine::KZMaterial cube_mat(Color(255, 255, 0), texture_path, 0.1f, 0.7f, 0.0f, 128, 3);
 	cube_mat.has_texture_ = true;
 	cube_mat.id_ = AddMaterial(cube_mat);
 
@@ -170,26 +168,41 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 		cube_obj.ScaleMath(scale);
 	}
 
-	object_vec_.push_back(cube_obj);
+	bool is_alpha = (alpha < 1.0f);
+	if (is_alpha)
+	{
+		++object_num_;
+		object_vec_.push_back(cube_obj);
+		//加入活跃物体列表
+		object_active_.push_back(true);
+	}
+	else
+	{
+		cube_obj.alpha_ = alpha;
+		++transparent_object_num_;
+		transparent_object_vec_.push_back(cube_obj);
+		sort(transparent_object_vec_.begin(), transparent_object_vec_.end(), [](KZObject a, KZObject b) {return a.world_pos_.z_ > b.world_pos_.z_; });
+		//加入活跃物体列表
+		transparent_object_active_.push_back(true);
+	}
+
+	
 }
 
 //创建三棱锥
-void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale, bool is_light) {
-	++object_num_;
-	KZObject pyramid;
+void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale, bool is_light, float alpha) {
+	KZObject pyramid_obj;
 	//设置物体id
-	pyramid.id_ = obj_id_;
+	pyramid_obj.id_ = obj_id_;
 	++obj_id_;
 
-	pyramid.name_ = "pyramid";
-	pyramid.world_pos_ = world_pos;
-	pyramid.ux_ = KZMath::KZVector4D<float>(1, 0, 0, 0);
-	pyramid.uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0);
-	pyramid.uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
-	pyramid.num_vertices_ = 4;
-	pyramid.vlist_local_.reserve(pyramid.num_vertices_);
-	//加入活跃物体列表
-	object_active_.push_back(true);
+	pyramid_obj.name_ = "pyramid";
+	pyramid_obj.world_pos_ = world_pos;
+	pyramid_obj.ux_ = KZMath::KZVector4D<float>(1, 0, 0, 0);
+	pyramid_obj.uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0);
+	pyramid_obj.uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
+	pyramid_obj.num_vertices_ = 4;
+	pyramid_obj.vlist_local_.reserve(pyramid_obj.num_vertices_);
 
 	//设置顶点的模型坐标
 	KZEngine::Vertex v1, v2, v3, v4;
@@ -204,64 +217,80 @@ void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const
 	v4.color.Set(255, 255, 0);*/
 
 	//将顶点加入列表
-	pyramid.vlist_local_.push_back(v1);
-	pyramid.vlist_local_.push_back(v2);
-	pyramid.vlist_local_.push_back(v3);
-	pyramid.vlist_local_.push_back(v4);
+	pyramid_obj.vlist_local_.push_back(v1);
+	pyramid_obj.vlist_local_.push_back(v2);
+	pyramid_obj.vlist_local_.push_back(v3);
+	pyramid_obj.vlist_local_.push_back(v4);
 
-	pyramid.num_index_ = 12;
-	pyramid.num_face_ = 4;
-	pyramid.index_.reserve(12);
+	pyramid_obj.num_index_ = 12;
+	pyramid_obj.num_face_ = 4;
+	pyramid_obj.index_.reserve(12);
 
 	//设置顶点索引
 	//face 1
-	pyramid.index_.push_back(3);
-	pyramid.index_.push_back(0);
-	pyramid.index_.push_back(2);
+	pyramid_obj.index_.push_back(3);
+	pyramid_obj.index_.push_back(0);
+	pyramid_obj.index_.push_back(2);
 
 	//face 2
-	pyramid.index_.push_back(3);
-	pyramid.index_.push_back(2);
-	pyramid.index_.push_back(1);
+	pyramid_obj.index_.push_back(3);
+	pyramid_obj.index_.push_back(2);
+	pyramid_obj.index_.push_back(1);
 
 	//face 3
-	pyramid.index_.push_back(3);
-	pyramid.index_.push_back(1);
-	pyramid.index_.push_back(0);
+	pyramid_obj.index_.push_back(3);
+	pyramid_obj.index_.push_back(1);
+	pyramid_obj.index_.push_back(0);
 
 	//face 4
-	pyramid.index_.push_back(1);
-	pyramid.index_.push_back(2);
-	pyramid.index_.push_back(0);
+	pyramid_obj.index_.push_back(1);
+	pyramid_obj.index_.push_back(2);
+	pyramid_obj.index_.push_back(0);
 
 	
 
-	pyramid.CalculateRadian();
-	pyramid.CalculateNormal();
-	pyramid.is_light_ = is_light;
-	pyramid.mat_id_.resize(4, 0);
+	pyramid_obj.CalculateRadian();
+	pyramid_obj.CalculateNormal();
+	pyramid_obj.is_light_ = is_light;
+	pyramid_obj.mat_id_.resize(4, 0);
 
 	if (quat != KZMath::KZQuat::ZERO) {
-		pyramid.RotationQuat(quat);
+		pyramid_obj.RotationQuat(quat);
 	}
 
 	if (scale != KZMath::KZVector4D<float>(1, 1, 1))
 	{
-		pyramid.ScaleMath(scale);
+		pyramid_obj.ScaleMath(scale);
 	}
 
-	object_vec_.push_back(pyramid);
+	bool is_alpha = (alpha < 1.0f);
+	if (is_alpha)
+	{
+		++object_num_;
+		object_vec_.push_back(pyramid_obj);
+		//加入活跃物体列表
+		object_active_.push_back(true);
+	}
+	else
+	{
+		pyramid_obj.alpha_ = alpha;
+		++transparent_object_num_;
+		transparent_object_vec_.push_back(pyramid_obj);
+		sort(transparent_object_vec_.begin(), transparent_object_vec_.end(), [](KZObject a, KZObject b) {return a.world_pos_.z_ > b.world_pos_.z_; });
+		//加入活跃物体列表
+		transparent_object_active_.push_back(true);
+	}
 }
 
 //创建圆柱
 void KZPipeLine::CreateCylinder(float top_radius, float bottom_radius, float height, uint32_t stack, uint32_t slice,
 	const KZEngine::Color& ini_color,
 	bool is_light,
+	float alpha,
 	const KZMath::KZVector4D<float>& world_pos,
 	const KZMath::KZQuat& quat,
 	const KZMath::KZVector4D<float>& scale)
 {
-	++object_num_;
 	KZObject cylinder_obj;
 	//设置物体id
 	cylinder_obj.id_ = obj_id_;
@@ -284,8 +313,7 @@ void KZPipeLine::CreateCylinder(float top_radius, float bottom_radius, float hei
 	cylinder_obj.num_face_ = (stack+1) * 2 * slice;
 	cylinder_obj.num_index_ = cylinder_obj.num_face_ * 3;
 	cylinder_obj.index_.reserve(cylinder_obj.num_index_);
-	//加入活跃物体列表
-	object_active_.push_back(true);
+	
 
 	float half_height = height * 0.5f;
 	float d_radius = (bottom_radius - top_radius) / (float)stack;
@@ -361,18 +389,35 @@ void KZPipeLine::CreateCylinder(float top_radius, float bottom_radius, float hei
 		cylinder_obj.ScaleMath(scale);
 	}
 
-	object_vec_.push_back(cylinder_obj);
+	bool is_alpha = (alpha < 1.0f);
+	if (is_alpha)
+	{
+		++object_num_;
+		object_vec_.push_back(cylinder_obj);
+		//加入活跃物体列表
+		object_active_.push_back(true);
+	}
+	else
+	{
+		cylinder_obj.alpha_ = alpha;
+		++transparent_object_num_;
+		transparent_object_vec_.push_back(cylinder_obj);
+		sort(transparent_object_vec_.begin(), transparent_object_vec_.end(), [](KZObject a, KZObject b) {return a.world_pos_.z_ > b.world_pos_.z_; });
+		//加入活跃物体列表
+		transparent_object_active_.push_back(true);
+	}
+
 }
 
 	//创建球体
 void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 	const KZEngine::Color& ini_color,
 	bool is_light,
+	float alpha,
 	const KZMath::KZVector4D<float>& world_pos,
 	const KZMath::KZQuat& quat,
 	const KZMath::KZVector4D<float>& scale)
 {
-	++object_num_;
 	KZObject sphere_obj;
 	//设置物体id
 	sphere_obj.id_ = obj_id_;
@@ -394,8 +439,6 @@ void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 	sphere_obj.num_face_ = (stack - 1) * 2 * slice;
 	sphere_obj.num_index_ = sphere_obj.num_face_ * 3;
 	sphere_obj.index_.reserve(sphere_obj.num_index_);
-	//加入活跃物体列表
-	object_active_.push_back(true);
 
 	float temp_radius = 0;
 	float d_phy = 3.14159f / stack;
@@ -463,12 +506,31 @@ void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 		sphere_obj.ScaleMath(scale);
 	}
 
-	object_vec_.push_back(sphere_obj);
+	
+	bool is_alpha = (alpha < 1.0f);
+	if (!is_alpha)
+	{
+		++object_num_;
+		object_vec_.push_back(sphere_obj);
+		//加入活跃物体列表
+		object_active_.push_back(true);
+
+	}
+	else
+	{
+		sphere_obj.alpha_ = alpha;
+		++transparent_object_num_;
+		transparent_object_vec_.push_back(sphere_obj);
+		sort(transparent_object_vec_.begin(), transparent_object_vec_.end(), [](KZObject a, KZObject b) {return a.world_pos_.z_ > b.world_pos_.z_; });
+		//加入活跃物体列表
+		transparent_object_active_.push_back(true);
+	}
+
 }
 
 //创建地形
 void KZPipeLine::Create_Terrain(float width, float height, float vscale, const char* height_map_file_name, const char* texture_map_file_name,
-	const KZEngine::Color& ini_color, bool is_light, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat)
+	const KZEngine::Color& ini_color, bool is_light, float alpha, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat)
 {
 	if (height == 0.0f || width == 0.0f || vscale < 0.0f || height_map_file_name == "")
 	{
@@ -482,30 +544,26 @@ void KZPipeLine::Create_Terrain(float width, float height, float vscale, const c
 	uint32_t terrain_mat_index = -1;
 	if (h_img_height != 0 && h_img_width != 0)
 	{
-		++object_num_;
-		KZObject terrain;
+		KZObject terrain_obj;
 
-		terrain.is_light_ = is_light;
+		terrain_obj.is_light_ = is_light;
 
 		//设置物体id
-		terrain.id_ = obj_id_;
+		terrain_obj.id_ = obj_id_;
 		++obj_id_;
-		terrain.name_ = "Terrain";
+		terrain_obj.name_ = "Terrain";
 
-		//加入活跃物体列表
-		object_active_.push_back(true);
+		terrain_obj.world_pos_ = world_pos;
+		terrain_obj.ux_ = KZMath::KZVector4D<float>(1, 0, 0, 0);
+		terrain_obj.uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0);
+		terrain_obj.uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
 
-		terrain.world_pos_ = world_pos;
-		terrain.ux_ = KZMath::KZVector4D<float>(1, 0, 0, 0);
-		terrain.uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0);
-		terrain.uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
-
-		terrain.num_vertices_ = h_img_height * h_img_width;
-		terrain.num_face_ = (h_img_height - 1) * (h_img_width - 1) * 2;
-		terrain.num_index_ = terrain.num_face_ * 3;
+		terrain_obj.num_vertices_ = h_img_height * h_img_width;
+		terrain_obj.num_face_ = (h_img_height - 1) * (h_img_width - 1) * 2;
+		terrain_obj.num_index_ = terrain_obj.num_face_ * 3;
 		
-		terrain.vlist_local_.resize(terrain.num_vertices_);
-		terrain.index_.reserve(terrain.num_index_);
+		terrain_obj.vlist_local_.resize(terrain_obj.num_vertices_);
+		terrain_obj.index_.reserve(terrain_obj.num_index_);
 
 		//三角形列步长
 		float col_step = 0.0f;
@@ -557,51 +615,68 @@ void KZPipeLine::Create_Terrain(float width, float height, float vscale, const c
 		{
 			for (uint32_t j = 0; j < h_img_width; ++j)
 			{
-				terrain.vlist_local_[vertex_idx].pos.x_ = (i * row_step - half_width);
+				terrain_obj.vlist_local_[vertex_idx].pos.x_ = (i * row_step - half_width);
 				height_img.GetSingleChannelColor(i, j, value);
-				terrain.vlist_local_[vertex_idx].pos.y_ = vscale * (value / 255.0f);
-				terrain.vlist_local_[vertex_idx].pos.z_ = (j * col_step - half_height);
-				terrain.vlist_local_[vertex_idx].pos.w_ = 1;
+				terrain_obj.vlist_local_[vertex_idx].pos.y_ = vscale * (value / 255.0f);
+				terrain_obj.vlist_local_[vertex_idx].pos.z_ = (j * col_step - half_height);
+				terrain_obj.vlist_local_[vertex_idx].pos.w_ = 1;
 
-				terrain.vlist_local_[vertex_idx].color = ini_color;
+				terrain_obj.vlist_local_[vertex_idx].color = ini_color;
 
 				if (texture_map_file_name != "")
 				{
-					terrain.vlist_local_[vertex_idx].uv.x_ = i * uv_row_step;
-					terrain.vlist_local_[vertex_idx].uv.y_ = j * uv_col_step;
+					terrain_obj.vlist_local_[vertex_idx].uv.x_ = i * uv_row_step;
+					terrain_obj.vlist_local_[vertex_idx].uv.y_ = j * uv_col_step;
 				}
 
 				if (i != h_img_height - 1 || j != h_img_width - 1)
 				{
 					uint32_t base_index = vertex_idx;
-					terrain.index_.push_back(base_index);
-					terrain.index_.push_back(base_index + h_img_width);
-					terrain.index_.push_back(base_index + 1);
+					terrain_obj.index_.push_back(base_index);
+					terrain_obj.index_.push_back(base_index + h_img_width);
+					terrain_obj.index_.push_back(base_index + 1);
 
-					terrain.index_.push_back(base_index + 1);
-					terrain.index_.push_back(base_index + h_img_width);
-					terrain.index_.push_back(base_index + h_img_width + 1);
+					terrain_obj.index_.push_back(base_index + 1);
+					terrain_obj.index_.push_back(base_index + h_img_width);
+					terrain_obj.index_.push_back(base_index + h_img_width + 1);
 				}
 
 				++vertex_idx;
 			}
 		}
 
-		terrain.mat_id_.resize(terrain.num_face_, terrain_mat_index);
-		terrain.CalculateRadian();
-		terrain.CalculateNormal();
+		terrain_obj.mat_id_.resize(terrain_obj.num_face_, terrain_mat_index);
+		terrain_obj.CalculateRadian();
+		terrain_obj.CalculateNormal();
 
 		if (quat != KZMath::KZQuat::ZERO) {
-			terrain.RotationQuat(quat);
+			terrain_obj.RotationQuat(quat);
 		}
 
-		object_vec_.push_back(terrain);
+		bool is_alpha = (alpha < 1.0f);
+		if (!is_alpha)
+		{
+			++object_num_;
+			object_vec_.push_back(terrain_obj);
+			//加入活跃物体列表
+			object_active_.push_back(true);
+		}
+		else
+		{
+			terrain_obj.alpha_ = alpha;
+			++transparent_object_num_;
+			transparent_object_vec_.push_back(terrain_obj);
+			sort(transparent_object_vec_.begin(), transparent_object_vec_.end(), [](KZObject a, KZObject b) {return a.world_pos_.z_ > b.world_pos_.z_; });
+			//加入活跃物体列表
+			transparent_object_active_.push_back(true);
+		}
 	}
 	
 }
 
 //物体消除，包围球测试
 void KZPipeLine::OcclusionCulling() {
+	//不透明物体
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		//根据远近平面裁剪
 		if ((object_vec_[i].world_pos_.z_ + object_vec_[i].max_radius_ < main_camera_.GetCameraFarClip()) || (object_vec_[i].world_pos_.z_ - object_vec_[i].max_radius_ > main_camera_.GetCameraNearClip())) {
@@ -622,11 +697,34 @@ void KZPipeLine::OcclusionCulling() {
 			continue;
 		}
 	}
+
+	//透明物体
+	for (uint32_t i = 0; i < transparent_object_num_; ++i) {
+		//根据远近平面裁剪
+		if ((transparent_object_vec_[i].world_pos_.z_ + transparent_object_vec_[i].max_radius_ < main_camera_.GetCameraFarClip()) || (transparent_object_vec_[i].world_pos_.z_ - transparent_object_vec_[i].max_radius_ > main_camera_.GetCameraNearClip())) {
+			transparent_object_active_[i] = false;
+			continue;
+		}
+		//根据左右平面裁剪
+		float w_test = main_camera_.GetViewRight() * transparent_object_vec_[i].world_pos_.z_ / main_camera_.GetCameraNearClip();
+		if ((transparent_object_vec_[i].world_pos_.x_ - transparent_object_vec_[i].max_radius_ > w_test) || (transparent_object_vec_[i].world_pos_.x_ + transparent_object_vec_[i].max_radius_ < -w_test)) {
+			transparent_object_active_[i] = false;
+			continue;
+		}
+
+		//根据上下平面裁剪
+		float h_test = main_camera_.GetViewTop() * transparent_object_vec_[i].world_pos_.z_ / main_camera_.GetCameraNearClip();
+		if ((transparent_object_vec_[i].world_pos_.y_ - transparent_object_vec_[i].max_radius_ > h_test) || (transparent_object_vec_[i].world_pos_.y_ + transparent_object_vec_[i].max_radius_ < -h_test)) {
+			transparent_object_active_[i] = false;
+			continue;
+		}
+	}
 	return;
 }
 
 //背面消除
 void KZPipeLine::BackfaceCulling() {
+	//普通物体
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		if (object_active_[i]) {
 			uint32_t face_index = 0;
@@ -669,6 +767,51 @@ void KZPipeLine::BackfaceCulling() {
 			}
 		}
 	}
+
+	//透明物体
+	for (uint32_t i = 0; i < transparent_object_num_; ++i) {
+		if (transparent_object_active_[i]) {
+			uint32_t face_index = 0;
+			for (uint32_t j = 0; j < transparent_object_vec_[i].num_index_; face_index++, j += 3) {
+				KZMath::KZVector4D<float> observe_vec = main_camera_.GetCameraPos() - transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j]].pos;
+				if (transparent_object_vec_[i].face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
+					continue;
+				}
+				else
+				{
+					KZEngine::Triangle tri;
+					if (transparent_object_vec_[i].is_light_) {
+						uint32_t light_num = static_cast<uint32_t>(light_vec_.size());
+						for (uint32_t k = 0; k < light_num; ++k) {
+							if (light_active_vec_[k]) {
+								transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j]].color += mat_vec_[transparent_object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j]].pos,
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j]].normal);
+								transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 1]].color += mat_vec_[transparent_object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 1]].pos,
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 1]].normal);
+								transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 2]].color += mat_vec_[transparent_object_vec_[i].mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 2]].pos,
+									transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 2]].normal);
+							}
+						}
+					}
+					tri.vertex_list[0] = transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j]];
+					tri.vertex_list[1] = transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 1]];
+					tri.vertex_list[2] = transparent_object_vec_[i].vlist_tran_[transparent_object_vec_[i].index_[j + 2]];
+					tri.alpha = transparent_object_vec_[i].alpha_;
+					tri.material = transparent_object_vec_[i].mat_id_[face_index];
+					++tri_num_;
+					if (tri_num_ > render_list_->tri_list_.size()) {
+						render_list_->tri_list_.resize(tri_num_ * 2);
+						render_list_->active_tri_.resize(tri_num_ * 2);
+					}
+					render_list_->tri_list_[tri_num_ - 1] = tri;
+					render_list_->active_tri_[tri_num_ - 1] = true;
+				}
+			}
+		}
+	}
 	return;
 }
 
@@ -676,6 +819,10 @@ void KZPipeLine::BackfaceCulling() {
 void KZPipeLine::TransformModelToWorld() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		object_vec_[i].TransformModelToWorldMath();
+	}
+	for (uint32_t i = 0; i < transparent_object_num_; ++i)
+	{
+		transparent_object_vec_[i].TransformModelToWorldMath();
 	}
 }
 
@@ -759,6 +906,7 @@ void KZPipeLine::Initial() {
 	}
 	tri_num_ = 0;
 	object_num_ = 0;
+	transparent_object_num_ = 0;
 	view_height_ = 600;
 	view_width_ = 800;
 	object_vec_.reserve(8);
@@ -810,13 +958,13 @@ void KZPipeLine::RasterizationDepthTest() {
 				//DrawBottomTriFast(v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
 				//std::thread thread_bottom(&KZPipeLine::DrawBottomTri, KZPipeLine::GetInstance(), v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
 				//thread_bottom.detach();
-				DrawBottomTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
+				DrawBottomTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material, render_list_->tri_list_[i].alpha);
 			}
 			//检查是否平顶三角形
 			else if (ceil(v0.pos.y_) == ceil(v1.pos.y_)) {
 				//std::thread thread_top(&KZPipeLine::DrawTopTri, KZPipeLine::GetInstance(), v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
 				//thread_top.detach();
-				DrawTopTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material);
+				DrawTopTri(v0, v1, v2, has_texture, render_list_->tri_list_[i].material, render_list_->tri_list_[i].alpha);
 			}
 			//一般三角形先做分割
 			else
@@ -846,15 +994,15 @@ void KZPipeLine::RasterizationDepthTest() {
 				//thread_bottom.detach();
 				//std::thread thread_top(&KZPipeLine::DrawTopTri, KZPipeLine::GetInstance(), new_vertex, v1, v2, has_texture, render_list_->tri_list_[i].material);
 				//thread_top.detach();
-				DrawBottomTri(v0, v1, new_vertex, has_texture, render_list_->tri_list_[i].material);
-				DrawTopTri(new_vertex, v1, v2, has_texture, render_list_->tri_list_[i].material);
+				DrawBottomTri(v0, v1, new_vertex, has_texture, render_list_->tri_list_[i].material, render_list_->tri_list_[i].alpha);
+				DrawTopTri(new_vertex, v1, v2, has_texture, render_list_->tri_list_[i].material, render_list_->tri_list_[i].alpha);
 			}
 		}
 	}
 }
 
 //浮点数版本光栅化平底三角形
-void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id) {
+void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id, float alpha) {
 	//pos:x关于y的左边斜率，关于y的右边斜率，z关于y的左边斜率，z关于y的右边斜率
 	float dx_left = 0.0f, dx_right = 0.0f, dz_left = 0.0f, dz_right = 0.0f;
 	//color:r关于y的左边斜率，r关于y的右边斜率，g关于y的左边斜率，g关于y的右边斜率，b关于y的左边斜率，b关于y的右边斜率
@@ -1014,6 +1162,19 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		t_right = y_error * dt_right + v0_t_overz;
 	}
 
+	uint32_t mip_level = 0;
+	uint32_t cur_level = 0;
+	if (mat_id != -1)
+	{
+		mip_level = mat_vec_[mat_id].GetMipLevel();
+	}
+	if (mip_level > 1)
+	{
+		float ave_z = (v0.pos.z_ + v1.pos.z_ + v2.pos.z_) * 0.33f + 1.0f;
+		cur_level = mip_level - 1 - (uint32_t)(mip_level * (ave_z / 2.0f));
+	}
+	
+
 	for (uint32_t j = y_start; j <= y_end; ++j) {
 		//z关于x的斜率
 		float delta_zx = 0.0f;
@@ -1029,6 +1190,12 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		//t关于x的斜率
 		float delta_tx = 0.0f;
 
+		//分段线性纹理方法，只计算扫描线端点的准确纹理坐标，线性插值从左到右计算纹理坐标
+		float s_left_cord = s_left / z_left;
+		float s_right_cord = s_right / z_right;
+		float t_left_cord = t_left / z_left;
+		float t_right_cord = t_right / z_right;
+
 		if (x_end - x_start != 0) {
 			//计算z,r,g,b,s,t相对于x的误差
 			float coeff = 1.0f / (x_end - x_start);
@@ -1039,8 +1206,8 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 
 			//检查是否贴图，避免不必要计算
 			if (has_texture) {
-				delta_sx = (s_right - s_left) * coeff;
-				delta_tx = (t_right - t_left) * coeff;
+				delta_sx = (s_right_cord - s_left_cord) * coeff;
+				delta_tx = (t_right_cord - t_left_cord) * coeff;
 			}
 		}
 
@@ -1053,9 +1220,9 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 		//扫描中当前的b值，不直接用left防止裁剪导致的误差
 		float b_cur = b_left;
 		//扫描中当前的s值，不直接用left防止裁剪导致的误差
-		float s_cur = s_left;
+		float s_cur = s_left_cord;
 		//扫描中当前的t值，不直接用left防止裁剪导致的误差
-		float t_cur = t_left;
+		float t_cur = t_left_cord;
 		//修复的x的起始值
 		fix_x_start = x_start;
 		//修复的x的终止值
@@ -1119,18 +1286,30 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 					z_buffer_[z_buffer_index] = z_cur;
 					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
 					if (has_texture) {
-						float one_over_z_cur = 1 / z_cur;
+						/*float one_over_z_cur = 1 / z_cur;
 						float s_cord = s_cur * one_over_z_cur;
 						float t_cord = t_cur * one_over_z_cur;
 						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
 						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
+						float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
+						float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level);
 					}
 					//draw point
 					uint32_t dist = j * view_width_ * 3 + k * 3;
-					frame_buffer_[dist] = final_color.b_;//Blue
-					frame_buffer_[dist + 1] = final_color.g_;//Green
-					frame_buffer_[dist + 2] = final_color.r_;//Red 
+					if (alpha == 1.0f) 
+					{
+						frame_buffer_[dist] = final_color.b_;//Blue
+						frame_buffer_[dist + 1] = final_color.g_;//Green
+						frame_buffer_[dist + 2] = final_color.r_;//Red 
+					}
+					else
+					{
+						frame_buffer_[dist] = alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist];//Blue
+						frame_buffer_[dist + 1] = alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1];//Green
+						frame_buffer_[dist + 2] = alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2];//Red 
+					}
 
 					//失败的多线程光栅化
 					//mutex_buffer_[z_buffer_index].unlock();
@@ -1176,7 +1355,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 }
 
 //浮点数版本光栅化平顶三角形
-void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id) {
+void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id, float alpha) {
 	//pos:x关于y的左边斜率，关于y的右边斜率，z关于y的左边斜率，z关于y的右边斜率
 	float dx_left = 0.0f, dx_right = 0.0f, dz_left = 0.0f, dz_right = 0.0f;
 	//color:r关于y的左边斜率，r关于y的右边斜率，g关于y的左边斜率，g关于y的右边斜率，b关于y的左边斜率，b关于y的右边斜率
@@ -1332,6 +1511,18 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		t_right = y_error * dt_right + v2_t_overz;
 	}
 
+	uint32_t mip_level = 0;
+	uint32_t cur_level = 0;
+	if (mat_id != -1)
+	{
+		mip_level = mat_vec_[mat_id].GetMipLevel();
+	}
+	if (mip_level > 1)
+	{
+		float ave_z = (v0.pos.z_ + v1.pos.z_ + v2.pos.z_) * 0.33f + 1.0f;
+		cur_level = mip_level - 1 - (uint32_t)(mip_level * (ave_z / 2.0f));
+	}
+
 	for (uint32_t j = y_start; j > y_end; --j) {
 		//z关于x的斜率
 		float delta_zx = 0.0f;
@@ -1346,6 +1537,13 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		float delta_sx = 0.0f;
 		//t关于x的斜率
 		float delta_tx = 0.0f;
+
+		//分段线性纹理方法，只计算扫描线端点的准确纹理坐标，线性插值从左到右计算纹理坐标
+		float s_left_cord = s_left / z_left;
+		float s_right_cord = s_right / z_right;
+		float t_left_cord = t_left / z_left;
+		float t_right_cord = t_right / z_right;
+
 		if (x_end - x_start != 0) {
 			float coeff = 1.0f / (x_end - x_start);
 			//计算z,r,g,b,s,t相对于x的梯度
@@ -1356,8 +1554,8 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 
 			//检查是否贴图，避免不必要计算
 			if (has_texture) {
-				delta_sx = (s_right - s_left) * coeff;
-				delta_tx = (t_right - t_left) * coeff;
+				delta_sx = (s_right_cord - s_left_cord) * coeff;
+				delta_tx = (t_right_cord - t_left_cord) * coeff;
 			}
 		}
 		//扫描中当前的z值，不直接用left防止裁剪导致的误差
@@ -1369,9 +1567,9 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 		//扫描中当前的b值，不直接用left防止裁剪导致的误差
 		float b_cur = b_left;
 		//扫描中当前的s值，不直接用left防止裁剪导致的误差
-		float s_cur = s_left;
+		float s_cur = s_left_cord;
 		//扫描中当前的t值，不直接用left防止裁剪导致的误差
-		float t_cur = t_left;
+		float t_cur = t_left_cord;
 		//修复的x的起始值
 		fix_x_start = x_start;
 		//修复的x的终止值
@@ -1433,19 +1631,32 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 					z_buffer_[z_buffer_index] = z_cur;
 					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
 					if (has_texture) {
-						float one_over_z_cur = 1 / z_cur;
+						/*float one_over_z_cur = 1 / z_cur;
 						float s_cord = s_cur * one_over_z_cur;
 						float t_cord = t_cur * one_over_z_cur;
 						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
 						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
+						float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
+						float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level);
 					}
 					//draw point
 					uint32_t dist = j * view_width_ * 3 + k * 3;
 					//draw point
-					frame_buffer_[dist] = final_color.b_;//Blue
-					frame_buffer_[dist + 1] = final_color.g_;//Green
-					frame_buffer_[dist + 2] = final_color.r_;//Red
+
+					if (alpha == 1.0f)
+					{
+						frame_buffer_[dist] = final_color.b_;//Blue
+						frame_buffer_[dist + 1] = final_color.g_;//Green
+						frame_buffer_[dist + 2] = final_color.r_;//Red 
+					}
+					else
+					{
+						frame_buffer_[dist] = alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist];//Blue
+						frame_buffer_[dist + 1] = alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1];//Green
+						frame_buffer_[dist + 2] = alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2];//Red 
+					}
 
 					//失败的多线程光栅化
 					//mutex_buffer_[z_buffer_index].unlock();
@@ -2077,6 +2288,14 @@ void KZPipeLine::DrawBottomTriFast(const Vertex& vertex0, const Vertex& vertex1,
 		t_right = y_error_float * dt_right + v0_t_overz;
 	}
 
+	uint32_t mip_level = mat_vec_[mat_id].GetMipLevel();
+	uint32_t cur_level = 0;
+	if (mip_level > 1)
+	{
+		float ave_z = (vertex0.pos.z_ + vertex1.pos.z_ + vertex2.pos.z_) * 0.33f + 1.0f;
+		cur_level = mip_level * (uint32_t)(ave_z / 2.0f);
+	}
+
 	for (uint32_t j = y_start; j <= y_end; ++j) {
 		//z关于x的斜率
 		int32_t delta_zx = 0;
@@ -2241,7 +2460,7 @@ void KZPipeLine::DrawBottomTriFast(const Vertex& vertex0, const Vertex& vertex1,
 						float t_cord = t_cur * one_over_z_cur;
 						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
 						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level);
 					}
 					//draw point
 					uint32_t dist = j * view_width_ * 3 + k * 3;
@@ -2697,6 +2916,14 @@ void KZPipeLine::DrawTopTriFast(const Vertex& vertex0, const Vertex& vertex1, co
 		t_right = y_error_float * dt_right + v2_t_overz;
 	}
 
+	uint32_t mip_level = mat_vec_[mat_id].GetMipLevel();
+	uint32_t cur_level = 0;
+	if (mip_level > 1)
+	{
+		float ave_z = (vertex0.pos.z_ + vertex1.pos.z_ + vertex2.pos.z_) * 0.33f + 1.0f;
+		cur_level = mip_level * (uint32_t)(ave_z / 2.0f);
+	}
+
 	for (uint32_t j = y_start; j > y_end; --j) {
 		//z关于x的斜率
 		int32_t delta_zx = 0;
@@ -2854,7 +3081,7 @@ void KZPipeLine::DrawTopTriFast(const Vertex& vertex0, const Vertex& vertex1, co
 						float t_cord = t_cur * one_over_z_cur;
 						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
 						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);
+						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level);
 					}
 					//draw point
 					uint32_t dist = j * view_width_ * 3 + k * 3;

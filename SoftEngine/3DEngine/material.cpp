@@ -2,10 +2,16 @@
 using namespace KZEngine;
 
 //构造函数
-KZMaterial::KZMaterial(const Color& color, const std::string& texture_path, float ka, float kd, float ks, uint32_t power)
-	:color_(color), texture_path_(texture_path), ka_(ka), kd_(kd), ks_(ks), power_(power), bitmap_(texture_path_)
+KZMaterial::KZMaterial(const Color& color, const std::string& texture_path, float ka, float kd, float ks, uint32_t power, uint32_t mip_level)
+	:color_(color), texture_path_(texture_path), ka_(ka), kd_(kd), ks_(ks), power_(power), mip_level_(mip_level)
 {
-
+	KZImage source_img(texture_path_);
+	bitmap_ = new KZImage[mip_level_]();
+	bitmap_[0] = std::move(source_img);
+	for (uint32_t i = 1; i < mip_level_; ++i)
+	{
+		bitmap_[i - 1].SetMipMapImage(bitmap_[i]);
+	}
 }
 
 ////拷贝构造函数
@@ -36,10 +42,10 @@ Color KZMaterial::CalculateFinalColor(LightBase* light, const KZMath::KZVector4D
 }
 
 //获取贴图颜色
-Color KZMaterial::GetTextureColor(float s, float t) {
+Color KZMaterial::GetTextureColor(float s, float t, uint32_t level) {
 	uint32_t x, y;
-	uint32_t height = bitmap_.GetHeight();
-	uint32_t width = bitmap_.GetWidth();
+	uint32_t height = bitmap_[level].GetHeight();
+	uint32_t width = bitmap_[level].GetWidth();
 	Color result;
 	if (width == 0 || height == 0) {
 		return result;
@@ -48,7 +54,7 @@ Color KZMaterial::GetTextureColor(float s, float t) {
 	{
 		x = static_cast<int>(s * (width - 1));
 		y = static_cast<int>(t * (height - 1));
-		bitmap_.GetPixel(x, y, result);
+		bitmap_[level].GetPixel(x, y, result);
 		return result;
 	}
 }

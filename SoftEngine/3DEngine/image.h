@@ -14,20 +14,26 @@ namespace KZEngine {
 	class KZImage
 	{
 	public:
+		//默认构造函数
+		KZImage();
 		//构造函数
-		KZImage(const std::string& file_name = "");
+		KZImage(const std::string& file_name);
 		//拷贝构造函数
 		KZImage(const KZImage& other);
+		//移动赋值
+		KZImage& operator=(KZImage&& other);
 		//析构函数
 		~KZImage();
 		//获取宽度
-		inline uint32_t GetWidth() { return width_; }
+		inline uint32_t GetWidth() const{ return width_; }
 		//获取高度
-		inline uint32_t GetHeight() { return height_; }
+		inline uint32_t GetHeight() const{ return height_; }
 		//获取指定位置像素
-		inline void GetPixel(uint32_t x, uint32_t y, Color& pixel) { pixel = pixel_[y * width_ + x]; }
+		inline void GetPixel(uint32_t x, uint32_t y, Color& pixel) const { pixel = pixel_[y * width_ + x]; }
 		//获取指定位置单通道的颜色值
-		inline void GetSingleChannelColor(uint32_t x, uint32_t y, uint32_t& value) { value = (uint32_t)pixel_[y * width_ + x].r_; }
+		inline void GetSingleChannelColor(uint32_t x, uint32_t y, uint32_t& value) const { value = (uint32_t)pixel_[y * width_ + x].r_; }
+		//设置mipmap链下一层的图片
+		void SetMipMapImage(KZImage& next) const;
 	private:
 		//将string转wstring
 		std::wstring StringToWString(const std::string& str);

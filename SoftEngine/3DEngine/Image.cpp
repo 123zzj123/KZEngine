@@ -1,6 +1,13 @@
 #include"image.h"
 using namespace KZEngine;
 
+//默认构造函数
+KZImage::KZImage() {
+	pixel_ = nullptr;
+	width_ = 0;
+	height_ = 0;
+}
+
 //构造函数
 KZImage::KZImage(const std::string& file_name) {
 	//判断字符串是否为空
@@ -15,13 +22,15 @@ KZImage::KZImage(const std::string& file_name) {
 		width_ = bmp->GetWidth();
 		Gdiplus::Color color;
 		pixel_ = new Color[height_ * width_];
+		uint32_t cur_idx = 0;
 		for (uint32_t i = 0; i < height_; ++i) {
 			for (uint32_t j = 0; j < width_; ++j) {
 				bmp->GetPixel(j, i, &color);
-				pixel_[i * width_ + j].r_ = color.GetRed();
-				pixel_[i * width_ + j].g_ = color.GetGreen();
-				pixel_[i * width_ + j].b_ = color.GetBlue();
-				pixel_[i * width_ + j].a_ = color.GetAlpha();
+				pixel_[cur_idx].r_ = color.GetRed();
+				pixel_[cur_idx].g_ = color.GetGreen();
+				pixel_[cur_idx].b_ = color.GetBlue();
+				pixel_[cur_idx].a_ = color.GetAlpha();
+				++cur_idx;
 			}
 		}
 		delete bmp;
@@ -47,6 +56,17 @@ KZImage::KZImage(const KZImage& other)
 			++cur_idx;
 		}
 	}
+}
+
+//移动赋值函数
+KZImage& KZImage::operator=(KZImage&& other)
+{
+	delete[]pixel_;
+	pixel_ = other.pixel_;
+	width_ = other.width_;
+	height_ = other.height_;
+	other.pixel_ = nullptr;
+	return *this;
 }
 
 //析构函数
@@ -92,4 +112,30 @@ bool KZImage::CheckFile(const std::string& file_name) {
 		}
 	}
 	return false;
+}
+
+//设置mipmap链下一层的图片
+void KZImage::SetMipMapImage(KZImage& next) const
+{
+	uint32_t next_width = width_ >> 1;
+	uint32_t next_height = height_ >> 1;
+	next.width_ = next_width;
+	next.height_ = next_height;
+	KZEngine::Color pixel_lu, pixel_ru, pixel_ld, pixel_rd;
+	//float gamma = 1.01f;
+	float factor = 0.26f;
+	uint32_t cur_idx = 0;
+	next.pixel_ = new Color[next_height * next_width];
+	for (uint32_t i = 0; i < next_height; ++i)
+	{
+		for (uint32_t j = 0; j < next_width; ++j)
+		{
+			GetPixel(i * 2, j * 2, pixel_lu);
+			GetPixel(i * 2, j * 2 + 1, pixel_ru);
+			GetPixel(i * 2 + 1, j * 2, pixel_ld);
+			GetPixel(i * 2 + 1, j * 2, pixel_rd);
+			next.pixel_[cur_idx] = (pixel_lu + pixel_ru + pixel_ld + pixel_rd) * factor;
+			++cur_idx;
+		}
+	}
 }

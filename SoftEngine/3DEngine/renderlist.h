@@ -9,6 +9,7 @@ namespace KZEngine {
 		Vertex vertex_list[3];
 		KZMath::KZVector4D<float> face_normal;
 		uint32_t material = -1;
+		float alpha = 1.0f;
 	}Triangle, *TrianglePtr;
 
 	//‰÷»æ¡–±Ì
