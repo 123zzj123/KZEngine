@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\vector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\fix32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\KZMath\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{BE223346-8BB5-3D57-9032-05AAB6A7F6AC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8AF385D6-0337-3CB2-9703-BE9723D0301A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -3,6 +3,7 @@
 #define LIGHT_H
 
 #include"../KZMath/vector.h"
+#include"../KZMath/matrix.h"
 
 namespace KZEngine {
 	typedef struct FixedColorTyp
@@ -75,6 +76,8 @@ namespace KZEngine {
 		virtual Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
 		virtual KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>());
+		//获取光源位置
+		virtual void GetLightPos(KZMath::KZVector4D<float>& light_pos) { return; };
 	protected:
 		LightType type_;
 		Color light_colr_;
@@ -87,9 +90,9 @@ namespace KZEngine {
 		//平行光构造函数
 		DirectionLight(const Color& color, const KZMath::KZVector4D<float>& dir) :LightBase(color), dir_(dir) { type_ = LightType::DIRECTION; }
 		//计算光照强度
-		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
+		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>()) override;
 		//获取光源向量
-		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
+		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos) override;
 	private:
 		//光源方向
 		KZMath::KZVector4D<float> dir_;
@@ -105,8 +108,10 @@ namespace KZEngine {
 		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
 		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
+		////获取光源位置
+		//inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
 		//获取光源位置
-		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
+		void GetLightPos(KZMath::KZVector4D<float>& light_pos) { light_pos = pos_; return; };
 	private:
 		//光源位置
 		KZMath::KZVector4D<float> pos_;
@@ -131,8 +136,10 @@ namespace KZEngine {
 		Color CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos = KZMath::KZVector4D<float>(), const KZMath::KZVector4D<float>& vertex_normal = KZMath::KZVector4D<float>());
 		//获取光源向量
 		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
+		////获取光源位置
+		//inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
 		//获取光源位置
-		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
+		void GetLightPos(KZMath::KZVector4D<float>& light_pos) { light_pos = pos_; return; };
 	private:
 		//光源位置
 		KZMath::KZVector4D<float> pos_;
@@ -160,7 +167,9 @@ namespace KZEngine {
 		//获取光源向量
 		KZMath::KZVector4D<float> GetLightVec(const KZMath::KZVector4D<float>& vertex_pos);
 		//获取光源位置
-		inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
+		//inline KZMath::KZVector4D<float> GetLightPos() { return pos_; };
+		//获取光源位置
+		void GetLightPos(KZMath::KZVector4D<float>& light_pos) { light_pos = pos_; return; };
 	private:
 		//光源位置
 		KZMath::KZVector4D<float> pos_;

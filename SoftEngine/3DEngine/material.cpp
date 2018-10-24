@@ -2,9 +2,10 @@
 using namespace KZEngine;
 
 //构造函数
-KZMaterial::KZMaterial(const Color& color, const std::string& texture_path, float ka, float kd, float ks, uint32_t power, uint32_t mip_level)
+KZMaterial::KZMaterial(const std::string& mat_name, const Color& color, const std::string& texture_path, float ka, float kd, float ks, uint32_t power, uint32_t mip_level)
 	:color_(color), texture_path_(texture_path), ka_(ka), kd_(kd), ks_(ks), power_(power), mip_level_(mip_level)
 {
+	BKDRHash(mat_name);
 	KZImage source_img(texture_path_);
 	bitmap_ = new KZImage[mip_level_]();
 	bitmap_[0] = std::move(source_img);
@@ -14,15 +15,30 @@ KZMaterial::KZMaterial(const Color& color, const std::string& texture_path, floa
 	}
 }
 
-////拷贝构造函数
-//KZMaterial::KZMaterial(const KZMaterial& other)
-//{
-//	*this = other;
-//}
-//
-////析构函数
-//KZMaterial::~KZMaterial() {
-//}
+//拷贝构造函数
+KZMaterial::KZMaterial(const KZMaterial& other)
+{
+	color_ = other.color_;
+	texture_path_ = other.texture_path_;
+	ka_ = other.ka_;
+	kd_ = other.kd_;
+	ks_ = other.ks_;
+	power_ = other.power_;
+	mip_level_ = other.mip_level_;
+	hash_ = other.hash_;
+	has_texture_ = other.has_texture_;
+	id_ = other.id_;
+	bitmap_ = new KZImage[mip_level_]();
+	for (uint32_t i = 0; i < mip_level_; ++i)
+	{
+		bitmap_[i] = std::move(other.bitmap_[i]);
+	}
+}
+
+//析构函数
+KZMaterial::~KZMaterial() {
+	delete[] bitmap_;
+}
 
 //计算光照最终颜色
 Color KZMaterial::CalculateFinalColor(LightBase* light, const KZMath::KZVector4D<float>& vertex_pos, const KZMath::KZVector4D<float>& vertex_normal, const KZMath::KZVector4D<float>& camera_pos) {
@@ -42,19 +58,33 @@ Color KZMaterial::CalculateFinalColor(LightBase* light, const KZMath::KZVector4D
 }
 
 //获取贴图颜色
-Color KZMaterial::GetTextureColor(float s, float t, uint32_t level) {
+void KZMaterial::GetTextureColor(float s, float t, uint32_t level, Color& color) {
 	uint32_t x, y;
 	uint32_t height = bitmap_[level].GetHeight();
 	uint32_t width = bitmap_[level].GetWidth();
-	Color result;
 	if (width == 0 || height == 0) {
-		return result;
+		return;
 	}
 	else
 	{
 		x = static_cast<int>(s * (width - 1));
 		y = static_cast<int>(t * (height - 1));
-		bitmap_[level].GetPixel(x, y, result);
-		return result;
+		bitmap_[level].GetPixel(x, y, color);
+		return;
 	}
+}
+
+//计算并设置材质hash
+void KZMaterial::BKDRHash(string str)
+{
+	unsigned int seed = 131; // 31 131 1313 13131 131313 etc..
+	unsigned int hash = 0;
+	uint32_t size = (uint32_t)str.length();
+	for (uint32_t i = 0; i < size; ++i)
+	{
+		hash = hash * seed + str[i];
+	}
+
+	hash_ = (hash & 0x7FFFFFFF);
+	return;
 }

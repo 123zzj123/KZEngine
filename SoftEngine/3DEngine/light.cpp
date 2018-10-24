@@ -24,7 +24,7 @@ ColorTyp KZEngine::ColorTyp::operator* (const ColorTyp& c) const {
 	res.r_ = r_ * c.r_ >> 8;
 	res.g_ = g_ * c.g_ >> 8;
 	res.b_ = b_ * c.b_ >> 8;
-	res.a_ = 255;
+	res.a_ = a_ * c.a_ >> 8;
 	return res;
 }
 
@@ -69,6 +69,7 @@ KZMath::KZVector4D<float> LightBase::GetLightVec(const KZMath::KZVector4D<float>
 KZMath::KZVector4D<float> DirectionLight::GetLightVec(const KZMath::KZVector4D<float>& vertex_pos) {
 	return -dir_;
 }
+
 
 //计算光照强度
 Color DirectionLight::CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos, const KZMath::KZVector4D<float>& vertex_normal) {
@@ -137,6 +138,9 @@ Color SimpleSpotLight::CalculateLightIntensity(const KZMath::KZVector4D<float>& 
 		return Color(0, 0, 0, 255);
 	}
 }
+
+
+
 
 //获取光源向量
 KZMath::KZVector4D<float> SimpleSpotLight::GetLightVec(const KZMath::KZVector4D<float>& vertex_pos) {

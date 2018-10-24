@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\renderlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8AF385D6-0337-3CB2-9703-BE9723D0301A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
