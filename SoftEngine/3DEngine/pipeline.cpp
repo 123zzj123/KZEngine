@@ -5,7 +5,7 @@ using namespace KZEngine;
 KZPipeLine::KZPipeLine() {
 	render_list_ = NULL;
 	main_camera_.GetCameraPos().Set(1.5f, 1.5f, 3);
-	LightBase* point_light = new PointLight(Color(255, 255, 255), KZMath::KZVector4D<float>(0, 10, -20), 1.0, 0.0f, 0.0f);
+	LightBase* point_light = new PointLight(Color(255, 255, 0), KZMath::KZVector4D<float>(0, 10, -20), 1.0, 0.0f, 0.0f);
 	LightBase* ambient_light = new AmbientLight(Color(255, 255, 255));
 	LightBase* direction_light = new DirectionLight(Color(255, 255, 255), KZMath::KZVector4D<float>(-1, 0, 0));
 	light_vec_.push_back(point_light);
@@ -80,6 +80,9 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 		v3.uv.y_ = 1.0f;
 		v4.uv.x_ = 0.0f;
 		v4.uv.y_ = 0.0f;
+	}
+	else {
+		cube_obj.has_shadow = false;
 	}
 
 	//将顶点加入列表
@@ -156,7 +159,7 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 	if (!light_cube)
 	{
 		string texture_path = "container.jpg";
-		KZEngine::KZMaterial cube_mat("cube", Color(255, 255, 0), texture_path, 0.1f, 0.7f, 0.0f, 128, 3);
+		KZEngine::KZMaterial cube_mat("cube", Color(255, 255, 255), texture_path, 0.1f, 0.7f, 0.0f, 128, 3);
 		cube_mat.has_texture_ = true;
 		cube_mat.id_ = AddMaterial(cube_mat);
 
@@ -187,7 +190,7 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 	bool is_alpha = (alpha < 1.0f);
 	if (!is_alpha)
 	{
-		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING) {
+		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING && cube_obj.has_shadow) {
 			uint32_t diff = cube_obj.num_index_;
 			//uint32_t ori_num_face = cube_obj.num_face_;
 			cube_obj.num_index_ <<= 1;
@@ -246,10 +249,10 @@ void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const
 	v3.pos.Set(0, 0, 2);
 	v4.pos.Set(0, 2, 1);*/
 
-	/*v1.color.Set(255, 0, 0);
-	v2.color.Set(0, 255, 0);
-	v3.color.Set(0, 0, 255);
-	v4.color.Set(255, 255, 0);*/
+	v1.color.Set(0, 0, 0);
+	v2.color.Set(0, 0, 0);
+	v3.color.Set(0, 0, 0);
+	v4.color.Set(0, 0, 0);
 
 	//将顶点加入列表
 	pyramid_obj.vlist_local_.push_back(v1);
@@ -287,7 +290,11 @@ void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const
 	pyramid_obj.CalculateRadian();
 	pyramid_obj.CalculateNormal();
 	pyramid_obj.is_light_ = is_light;
-	pyramid_obj.mat_id_.resize(4, 0);
+	string texture_path = "";
+	KZEngine::KZMaterial pyramid_mat("pyramid", Color(255, 255, 255), texture_path, 0.1f, 0.7f, 0.0f, 128, 3);
+	pyramid_mat.has_texture_ = false;
+	pyramid_mat.id_ = AddMaterial(pyramid_mat);
+	pyramid_obj.mat_id_.resize(4, pyramid_mat.id_);
 
 	if (quat != KZMath::KZQuat::ZERO) {
 		pyramid_obj.RotationQuat(quat);
@@ -836,7 +843,7 @@ void KZPipeLine::addShadowObj(const string& shadow_name, const string& shadow_ma
 	shadow_obj.index_.push_back(2);
 	shadow_obj.index_.push_back(3);
 
-	KZEngine::KZMaterial shadow_mat(shadow_name, Color(255, 255, 0), shadow_map_texture, 0.1f, 0.7f, 0.0f, 128, 3);
+	KZEngine::KZMaterial shadow_mat(shadow_name, Color(0, 0, 0), shadow_map_texture, 0.1f, 0.7f, 0.0f, 128, 3);
 	shadow_mat.has_texture_ = true;
 	shadow_mat.id_ = AddMaterial(shadow_mat);
 
@@ -1009,7 +1016,7 @@ void KZPipeLine::BackfaceCulling() {
 void KZPipeLine::TransformModelToWorld() {
 	for (uint32_t i = 0; i < object_num_; ++i) {
 		object_vec_[i].TransformModelToWorldMath();
-		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING && object_vec_[i].world_pos_.y_ > 0)
+		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING && object_vec_[i].has_shadow && object_vec_[i].world_pos_.y_ > 0)
 		{
 			KZMath::KZVector4D<float> light_pos;
 			light_vec_[0]->GetLightPos(light_pos);

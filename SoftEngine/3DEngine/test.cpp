@@ -190,16 +190,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	//开启gdi+
 	GdiplusStartup(&gdi_plus_token,&gdiplus_startup_input, NULL);
 
-	//KZMath::KZQuat quat;
-	//quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 0, 1), 90);
 	KZEngine::KZPipeLine* p_instance = KZEngine::KZPipeLine::GetInstance();
-	p_instance->SetCalculateShadow(KZEngine::CalCulate_Shadow::VERTEXMAPPING);
-	p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, KZMath::KZVector4D<float>(0, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1,1,1), false, 1.0f);
+	p_instance->SetCalculateShadow(KZEngine::CalCulate_Shadow::NONE);
+	p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, KZMath::KZVector4D<float>(0, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1,1,1), false, 1.0f, "");
+	//shadow_texture/cube_shadow.png
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, true, KZMath::KZVector4D<float>(0, 10, -20));
 	//p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), false, 0.2f, KZMath::KZVector4D<float>(0, 0, -5));
-	//p_instance->CreateCylinder(0.6f, 0.6f, 1.0f, 4, 8, KZEngine::Color(255, 255, 0), false, 1.0f, KZMath::KZVector4D<float>(2.0f, 1.0f, -3), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1));
-	p_instance->Create_Terrain(20, 20, 4, "height_map_texture/cs1.bmp", "", KZEngine::Color(255, 255, 255), false, 1.0f, KZMath::KZVector4D<float>(0, -4, -10), KZMath::KZQuat::ZERO);
-	//p_instance->CreatePyramid();
+	//p_instance->CreateCylinder(0.6f, 0.6f, 1.0f, 4, 8, KZEngine::Color(255, 255, 0), false, 1.0f, KZMath::KZVector4D<float>(2.0f, 1.0f, -5), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1),"");
+	//shadow_texture/sphere_shadow.png
+	//p_instance->Create_Terrain(20, 20, 4, "height_map_texture/cs1.bmp", "", KZEngine::Color(255, 255, 255), false, 1.0f, KZMath::KZVector4D<float>(0, -4, -10), KZMath::KZQuat::ZERO);
+	p_instance->CreatePyramid();
 	if (!IniWindowClass(hInstance)) {
 		return false;
 	}

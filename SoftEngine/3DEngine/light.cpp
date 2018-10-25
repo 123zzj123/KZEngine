@@ -75,9 +75,7 @@ KZMath::KZVector4D<float> DirectionLight::GetLightVec(const KZMath::KZVector4D<f
 Color DirectionLight::CalculateLightIntensity(const KZMath::KZVector4D<float>& vertex_pos, const KZMath::KZVector4D<float>& vertex_normal) {
 	float dot = vertex_normal.Vector3Dot(-dir_);
 	if (dot > 0) {
-		Color color = light_colr_;
-		color *= dot;
-		return color;
+		return light_colr_;
 	}
 	else
 	{

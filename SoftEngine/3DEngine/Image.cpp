@@ -11,7 +11,7 @@ KZImage::KZImage() {
 //构造函数
 KZImage::KZImage(const std::string& file_name) {
 	//判断字符串是否为空
-	assert(file_name != "");
+	//assert(file_name != "");
 	//判断文件存在且格式正确
 	if (true) {
 		std::wstring infilename = StringToWString(file_name);

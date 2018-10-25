@@ -81,6 +81,8 @@ namespace KZEngine {
 		bool is_light_ = false;
 		//物体alpha属性
 		float alpha_ = 1.0f;
+		//是否具有阴影
+		bool has_shadow = true;
 		//材质id
 		vector<int32_t> mat_id_;
 	private:
