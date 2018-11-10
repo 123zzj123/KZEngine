@@ -21,8 +21,8 @@ namespace KZEngine {
 	enum CalCulate_Shadow
 	{
 		NONE,
+		SHADOWTEXTURE,
 		VERTEXMAPPING,
-		SHADOWMAPPING
 	};
 	class KZPipeLine
 	{

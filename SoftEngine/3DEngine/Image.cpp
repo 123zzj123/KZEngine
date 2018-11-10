@@ -20,6 +20,10 @@ KZImage::KZImage(const std::string& file_name) {
 
 		height_ = bmp->GetHeight();
 		width_ = bmp->GetWidth();
+
+		//若宽度与高度等于0则图片文件不存在或者文件格式有问题,故设置断言
+		//assert(height_ > 0 && width_ > 0);
+
 		Gdiplus::Color color;
 		pixel_ = new Color[height_ * width_];
 		uint32_t cur_idx = 0;

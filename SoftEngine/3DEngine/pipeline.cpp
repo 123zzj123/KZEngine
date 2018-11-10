@@ -221,7 +221,7 @@ void KZPipeLine::CreateCube(float width, float length, float height,
 	}
 
 	//阴影位图物体
-	if (shadow_map != "")
+	if (calculate_shadow_ == SHADOWTEXTURE && shadow_map != "")
 	{
 		addShadowObj("cube_shadow", shadow_map, cube_obj.world_pos_, cube_obj.max_radius_);
 	}
@@ -339,7 +339,7 @@ void KZPipeLine::CreatePyramid(const KZMath::KZVector4D<float>& world_pos, const
 	}
 
 	//阴影位图物体
-	if (shadow_map != "")
+	if (calculate_shadow_ == SHADOWTEXTURE && shadow_map != "")
 	{
 		addShadowObj("cube_shadow", shadow_map, pyramid_obj.world_pos_, pyramid_obj.max_radius_);
 	}
@@ -487,7 +487,7 @@ void KZPipeLine::CreateCylinder(float top_radius, float bottom_radius, float hei
 	}
 
 	//阴影位图物体
-	if (shadow_map != "")
+	if (calculate_shadow_ == SHADOWTEXTURE && shadow_map != "")
 	{
 		addShadowObj("cylinder_shadow", shadow_map, cylinder_obj.world_pos_, cylinder_obj.max_radius_);
 	}
@@ -595,7 +595,7 @@ void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 	bool is_alpha = (alpha < 1.0f);
 	if (!is_alpha)
 	{
-		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING) {
+		if (calculate_shadow_ == CalCulate_Shadow::VERTEXMAPPING && world_pos.y_ > 0.0f) {
 			uint32_t diff = sphere_obj.num_index_;
 			//uint32_t ori_num_face = cube_obj.num_face_;
 			sphere_obj.num_index_ <<= 1;
@@ -626,7 +626,7 @@ void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 	}
 
 	//阴影位图物体
-	if (shadow_map != "")
+	if (calculate_shadow_ == SHADOWTEXTURE && shadow_map != "")
 	{
 		addShadowObj("sphere_shadow", shadow_map, sphere_obj.world_pos_, sphere_obj.max_radius_);
 	}
@@ -636,7 +636,8 @@ void KZPipeLine::CreateSphere(float radius, uint32_t stack, uint32_t slice,
 void KZPipeLine::Create_Terrain(float width, float height, float vscale, const char* height_map_file_name, const char* texture_map_file_name,
 	const KZEngine::Color& ini_color, bool is_light, float alpha, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat)
 {
-	if (height == 0.0f || width == 0.0f || vscale < 0.0f || height_map_file_name == "")
+	assert(height != 0.0f && width != 0 && vscale > 0.0f && strlen(height_map_file_name) != 0);
+	if (height == 0.0f || width == 0.0f || vscale < 0.0f || strlen(height_map_file_name) == 0)
 	{
 		return;
 	}
@@ -646,6 +647,7 @@ void KZPipeLine::Create_Terrain(float width, float height, float vscale, const c
 	uint32_t h_img_height = height_img.GetHeight();
 	uint32_t h_img_width = height_img.GetWidth();
 	uint32_t terrain_mat_index = -1;
+
 	if (h_img_height != 0 && h_img_width != 0)
 	{
 		KZObject terrain_obj;
@@ -689,7 +691,7 @@ void KZPipeLine::Create_Terrain(float width, float height, float vscale, const c
 		}
 
 		//加载纹理图
-		if (texture_map_file_name != "")
+		if (strlen(texture_map_file_name) != 0)
 		{
 			KZEngine::KZMaterial terrain_mat("terrain" ,Color(255, 255, 0), texture_map_file_name, 0.1f, 0.7f, 0.0f, 128);
 			terrain_mat.id_ = 1;
@@ -1128,33 +1130,6 @@ void KZPipeLine::FrameUpdate() {
 	/*KZMath::KZQuat quat;
 	quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 0, 1), 1);
 	object_vec_[0].RotationQuat(quat);*/
-
-	if (calculate_shadow_ == CalCulate_Shadow::SHADOWMAPPING)
-	{
-		calculate_shadow_ = CalCulate_Shadow::NONE;
-		getSceneAABB(false);
-		float mid_x = aabb_min_.x_ + aabb_max_.x_;
-		float mid_y = aabb_min_.x_ + aabb_max_.x_;
-		KZCamera light_camera(KZMath::KZVector4D<float>(mid_x, mid_y, aabb_max_.z_), 45.0f, 1.0f, 0.0f, aabb_max_.z_ - aabb_min_.z_);
-		KZMath::KZMatrix44 light_view_matrix;
-		KZMath::KZMatrix44 light_proj_matrix;
-		light_camera.GetViewMatrix(light_view_matrix);
-		light_camera.GetPerspectiveMatrix(light_proj_matrix);
-		light_space_matrix_ = light_view_matrix * light_proj_matrix;
-		for (uint32_t i = 0; i < object_num_; ++i) {
-			object_vec_[i].TransformModelToWorldMath();
-			object_vec_[i].Transform(light_space_matrix_);
-			for (uint32_t j = 0; j < object_vec_[i].num_vertices_; ++j) {
-				float w_inverse = 1 / object_vec_[i].vlist_tran_[j].pos.w_;
-				object_vec_[i].vlist_tran_[j].pos.x_ *= w_inverse;
-				object_vec_[i].vlist_tran_[j].pos.y_ *= w_inverse;
-				object_vec_[i].vlist_tran_[j].pos.z_ *= w_inverse;
-			}
-			for (uint32_t k = 0; k < object_vec_[i].num_index_; k += 3) {
-				
-			}
-		}
-	}
 
 	//固定管线
 	TransformModelToWorld();
