@@ -9,23 +9,37 @@
 #include"renderlist.h"
 #include"camera.h"
 #include"material.h"
+#include "BHV.h"
+#include<list>
+#include <limits.h>
 //#include<thread>
 //#include<mutex>
 
 namespace KZEngine {
-	enum Projection
+	enum class Projection
 	{
 		PERSPECTIVE,
 		ORTHOGONAL,
 	};
-	enum CalCulate_Shadow
+
+	enum class CalCulateShadow
 	{
 		NONE,
 		SHADOWTEXTURE,
 		VERTEXMAPPING,
 	};
+
+	enum class SceneManage
+	{
+		NONE,
+		BHV,
+		BSP
+	};
+
 	class KZPipeLine
 	{
+		friend class KZBHV;
+		friend class KZBSP;
 	public:
 		//获取或删除单实例
 		static KZPipeLine* GetInstance() {
@@ -93,7 +107,7 @@ namespace KZEngine {
 		//改变光状态
 		void ChangeLight(uint32_t light_index);
 		//设置计算阴影的方式
-		inline void SetCalculateShadow(const CalCulate_Shadow& calculate_shadow)
+		inline void SetCalculateShadow(const CalCulateShadow& calculate_shadow)
 		{
 			calculate_shadow_ = calculate_shadow;
 		}
@@ -116,6 +130,21 @@ namespace KZEngine {
 		inline unsigned char* GetFrameBuffer() {
 			return frame_buffer_;
 		}
+		inline void SetSceneManage(SceneManage scene_manage) {
+			scene_manage_ = scene_manage;
+			switch (scene_manage_)
+			{
+			case KZEngine::SceneManage::NONE:
+				break;
+			case KZEngine::SceneManage::BHV:
+				KZBHV::BuildSceneBHVTree(bhv_root_, 0, 2);
+				break;
+			case KZEngine::SceneManage::BSP:
+				break;
+			default:
+				break;
+			}
+		}
 	public:
 		//主摄像机
 		KZCamera main_camera_;
@@ -126,6 +155,8 @@ namespace KZEngine {
 		//是否首次按下鼠标左键
 		bool first_mouse_ = false;
 	protected:
+		//场景剔除：物体剔除，背面消除
+		void SceneManageCulling();
 		//物体消除，包围球测试
 		void OcclusionCulling();
 		//背面消除
@@ -145,13 +176,13 @@ namespace KZEngine {
 		//整数版本光栅化与深度测试
 		void RasterizationDepthTestFast();
 		//浮点数版本光栅化平底三角形
-		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f, bool render_shadow_map = false);
+		void DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//整数版本光栅化平底三角形
-		void DrawBottomTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		void DrawBottomTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//浮点数版本光栅化平顶三角形
-		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f, bool render_shadow_map = false);
+		void DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//整数版本光栅化平顶三角形
-		void DrawTopTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1);
+		void DrawTopTriFast(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool has_texture, int32_t mat_id = -1, float alpha = 1.0f);
 		//双缓冲交换
 		void SwapBuffer();
 		//增加阴影位图物体
@@ -214,11 +245,17 @@ namespace KZEngine {
 		//对象id
 		uint32_t obj_id_ = 1;
 		//渲染管线计算阴影的方式 0表示不计算，1表示平面网格阴影映射，2表示shadow mapping
-		CalCulate_Shadow calculate_shadow_ = CalCulate_Shadow::NONE;
+		CalCulateShadow calculate_shadow_ = CalCulateShadow::NONE;
 		//AABB min
 		KZMath::KZVector4D<float> aabb_min_ = KZMath::KZVector4D<float>(0, 0, 0, 1);
 		//AABB max
-		KZMath::KZVector4D<float> aabb_max_ = KZMath::KZVector4D<float>(0, 0, 0, 1);;
+		KZMath::KZVector4D<float> aabb_max_ = KZMath::KZVector4D<float>(0, 0, 0, 1);
+		//BHV树根节点
+		BHVNodePtr bhv_root_;
+		//投影方式
+		Projection projection_ = Projection::PERSPECTIVE;
+		//场景管理方式
+		SceneManage scene_manage_ = SceneManage::BHV;
 	private:
 		//单实例
 		static KZPipeLine* p_instance_;

@@ -30,13 +30,7 @@ void KZObject::TransformModelToWorldMath() {
 //获取物体包围盒
 void KZObject::GetObjectAABB(KZMath::KZVector4D<float>&vec_min, KZMath::KZVector4D<float>& vec_max) const
 {
-	vec_min.x_ = vlist_local_[0].pos.x_ + world_pos_.x_;
-	vec_max.x_ = vec_min.x_;
-	vec_min.y_ = vlist_local_[0].pos.y_ + world_pos_.y_;
-	vec_max.y_ = vec_min.y_;
-	vec_min.z_ = vlist_local_[0].pos.z_ + world_pos_.z_;
-	vec_max.z_ = vec_min.z_;
-	for (uint32_t i = 1; i < num_vertices_; ++i) {
+	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		float temp_x = vlist_local_[i].pos.x_ + world_pos_.x_;
 		float temp_y = vlist_local_[i].pos.y_ + world_pos_.y_;
 		float temp_z = vlist_local_[i].pos.z_ + world_pos_.z_;

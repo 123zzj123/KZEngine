@@ -4,7 +4,7 @@ using namespace KZMath;
 //2D参数线段相交
 bool KZMath::KZLine2DIntersect(KZLine2DPtr p1, KZLine2DPtr p2, KZPoint2DPtr pt) {
 	float det_p1p2 = (p1->v_.x_ * p2->v_.y_ - p1->v_.y_ * p2->v_.x_);
-	if (fabs(det_p1p2) <= EPSION_E5) {
+	if (fabs(det_p1p2) <= EPSILON_E5) {
 		return false;
 	}
 	float t1, t2;
@@ -29,11 +29,11 @@ float KZMath::ComputePoint3DInPLane3D(KZPoint3DPtr pt, KZPlane3DPtr plane) {
 }
 
 //3D线段与平面相交
-bool KZMath::IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPoint3DPtr pt) {
+bool KZMath::IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPoint3DPtr pt, float& t) {
 	float plane_dot_line = KZVector3DDot(plane->n_, pline->v_);
 
-	if (fabs(plane_dot_line) <= EPSION_E5) {
-		if (fabs(ComputePoint3DInPLane3D(&pline->p0_, plane)) <= EPSION_E5) {
+	if (fabs(plane_dot_line) <= EPSILON_E5) {
+		if (fabs(ComputePoint3DInPLane3D(&pline->p0_, plane)) <= EPSILON_E5) {
 			pt->x_ = pline->p0_.x_;
 			pt->y_ = pline->p0_.y_;
 			pt->z_ = pline->p0_.z_;
@@ -45,7 +45,7 @@ bool KZMath::IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPo
 		}
 	}
 
-	float t = -(plane->n_.x_ * pline->p0_.x_ +
+	t = -(plane->n_.x_ * pline->p0_.x_ +
 		plane->n_.y_ * pline->p0_.y_ +
 		plane->n_.z_ * pline->p0_.z_ -
 		plane->n_.x_ * plane->p0_.x_ -

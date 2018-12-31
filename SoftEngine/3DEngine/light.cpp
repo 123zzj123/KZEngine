@@ -29,6 +29,13 @@ ColorTyp KZEngine::ColorTyp::operator* (const ColorTyp& c) const {
 }
 
 //颜色乘法
+void KZEngine::ColorTyp::operator*= (const ColorTyp& c) {
+	r_ = r_ * c.r_ >> 8;
+	g_ = g_ * c.g_ >> 8;
+	b_ = b_ * c.b_ >> 8;
+	a_ = a_ * c.a_ >> 8;
+}
+//颜色乘法
 ColorTyp KZEngine::ColorTyp::operator* (float num) const {
 	int r_base = r_;
 	int g_base = g_;

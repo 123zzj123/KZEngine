@@ -45,18 +45,13 @@ KZMatrix44::KZMatrix44(const float* pArray) {
 KZMatrix44 KZMatrix44::operator*(const KZMatrix44& nm) const{
 	KZMatrix44 m1;
 	for (uint32_t i = 0; i < 4; ++i) {
-		KZVector4D<float> row;
-		row.x_ = m_[i][0];
-		row.y_ = m_[i][1];
-		row.z_ = m_[i][2];
-		row.w_ = m_[i][3];
 		for (uint32_t j = 0; j < 4; ++j) {
 			KZVector4D<float> col;
 			col.x_ = nm.m_[0][j];
 			col.y_ = nm.m_[1][j];
 			col.z_ = nm.m_[2][j];
 			col.w_ = nm.m_[3][j];
-			m1.m_[i][j] = row * col;
+			m1.m_[i][j] = v1_ * col;
 		}
 	}
 	return m1;
@@ -64,11 +59,7 @@ KZMatrix44 KZMatrix44::operator*(const KZMatrix44& nm) const{
 
 //矩阵与向量乘法
 KZVector4D<float> KZMatrix44::operator*(const KZVector4D<float>& nv) const{
-	KZVector4D<float> res_vec;
-	res_vec.x_ = v1_ * nv;
-	res_vec.y_ = v2_ * nv;
-	res_vec.z_ = v3_ * nv;
-	res_vec.w_ = v4_ * nv;
+	KZVector4D<float> res_vec(v1_ * nv, v2_ * nv, v3_ * nv, v4_ * nv);
 	return res_vec;
 }
 

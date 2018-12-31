@@ -10,6 +10,8 @@ namespace KZEngine {
 		KZMath::KZVector4D<float> face_normal;
 		uint32_t material = -1;
 		float alpha = 1.0f;
+		bool bsp_split = false;
+		uint32_t bsp_split_id = 0;
 	}Triangle, *TrianglePtr;
 
 	//‰÷»æ¡–±Ì

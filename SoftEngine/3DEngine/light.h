@@ -41,6 +41,8 @@ namespace KZEngine {
 		void operator+= (const ColorTyp& c);
 		//颜色乘法
 		ColorTyp operator* (const ColorTyp& c) const;
+		//颜色乘法
+		void operator*= (const ColorTyp& c);
 		//颜色浮点值乘法
 		ColorTyp operator* (float num) const;
 		//颜色浮点值乘法

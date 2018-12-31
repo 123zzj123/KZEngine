@@ -1,7 +1,7 @@
 #pragma once
 #ifndef KZUTIL
 #define KZUTIL
-#define EPSION_E5 (float)(1E-5)
+#define EPSILON_E5 (float)(1E-5)
 #include<cmath>
 
 using namespace std;
@@ -74,7 +74,7 @@ namespace KZMath {
 	//判断点和平面的关系
 	float ComputePoint3DInPLane3D(KZPoint3DPtr pt, KZPlane3DPtr plane);
 	//3D线段与平面相交
-	bool IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPoint3DPtr pt);
+	bool IntersetLine3DInPlane3D(KZLine3DPtr pline, KZPlane3DPtr plane, KZPoint3DPtr pt, float& t);
 	//向量点乘
 	float KZVector3DDot(KZVector3D& v1, KZVector3D& v2);
 }

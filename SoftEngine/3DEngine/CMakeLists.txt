@@ -17,6 +17,10 @@ set(SRCS
 	pipeline.cpp
 	renderlist.h
 	renderlist.cpp
+	bsp.h
+	bsp.cpp
+	bhv.h
+	bhv.cpp
 	test.cpp
 )
 
