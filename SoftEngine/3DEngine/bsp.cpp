@@ -2,6 +2,9 @@
 #include "pipeline.h"
 using namespace KZEngine;
 
+uint32_t KZBSP::bsp_plane_id = 0;
+vector<BSPSplitPlane> KZBSP::split_plane_vec_;
+
 //建造场景BSP树
 void KZBSP::BuildSceneBSPTree(BSPNodePtr& bsp_root, uint32_t level) {
 	if (level == 0) {
@@ -23,11 +26,16 @@ void KZBSP::CleanSceneBSPTree(BSPNodePtr& bsp_root) {
 }
 
 void KZBSP::ChooseBestSplitPlane() {
+	uint32_t len = split_plane_vec_.size();
+	for (uint32_t i = 0; i < len; ++i) {
 
+	}
 }
 
 void KZBSP::IniSplitPlaneVec() {
+	split_plane_vec_.clear();
 	KZPipeLine* instance = KZPipeLine::GetInstance();
+	//只针对所有不透明三角形，bsp为了产生portal，透明无法形成portal
 	for (uint32_t i = 0; i < instance->tri_num_; ++i) {
 		for (uint32_t i = 0; i < split_plane_vec_.size(); ++i) {
 			float x_ratio = split_plane_vec_[i].plane_.n_.x_ / instance->render_list_->tri_list_[i].face_normal.x_;
@@ -45,25 +53,16 @@ void KZBSP::IniSplitPlaneVec() {
 			}
 			else
 			{
-				KZMath::KZPlane3D temp_plane;
-				temp_plane.n_.x_ = instance->render_list_->tri_list_[i].face_normal.x_;
-				temp_plane.n_.y_ = instance->render_list_->tri_list_[i].face_normal.y_;
-				temp_plane.n_.z_ = instance->render_list_->tri_list_[i].face_normal.z_;
-				temp_plane.p0_.x_ = instance->render_list_->tri_list_[i].vertex_list[0].pos.x_;
-				temp_plane.p0_.y_ = instance->render_list_->tri_list_[i].vertex_list[0].pos.y_;
-				temp_plane.p0_.z_ = instance->render_list_->tri_list_[i].vertex_list[0].pos.z_;
+				KZMath::KZPlane3D temp_plane(instance->render_list_->tri_list_[i].vertex_list[0].pos.x_,
+					instance->render_list_->tri_list_[i].vertex_list[0].pos.y_,
+					instance->render_list_->tri_list_[i].vertex_list[0].pos.z_,
+					instance->render_list_->tri_list_[i].face_normal.x_,
+					instance->render_list_->tri_list_[i].face_normal.y_,
+					instance->render_list_->tri_list_[i].face_normal.z_);
 
-				BSPSplitPlane temp_split_plane;
-				temp_split_plane.id = bsp_plane_id;
-				++bsp_plane_id;
-				temp_split_plane.mark_ = false;
-				temp_split_plane.plane_ = temp_plane;
-				temp_split_plane.relative_tri.push_back(&instance->render_list_->tri_list_[i]);
+				BSPSplitPlane temp_split_plane(temp_plane, &instance->render_list_->tri_list_[i], bsp_plane_id);
+				split_plane_vec_.push_back(temp_split_plane);
 			}
 		}
-	}
-
-	for (uint32_t i = 0; i < instance->transparent_tri_num_; ++i) {
-
 	}
 }

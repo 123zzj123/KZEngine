@@ -6,6 +6,7 @@ void KZObject::TransformModelToWorldMatrix() {
 	KZMath::KZMatrix44 transform;
 	transform.Translation(world_pos_);
 	Vertex temp_vertex(0,0,0);
+	vlist_tran_.clear();
 	vlist_tran_.reserve(num_vertices_);
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		temp_vertex.pos = transform * vlist_local_[i].pos;
@@ -17,7 +18,7 @@ void KZObject::TransformModelToWorldMatrix() {
 //物体通过数学公式从模型坐标系转世界坐标系
 void KZObject::TransformModelToWorldMath() {
 	Vertex temp_vertex(0, 0, 0, 0, 0, 0);
-	vector<KZEngine::Vertex>().swap(vlist_tran_);
+	vlist_tran_.clear();
 	vlist_tran_.reserve(num_vertices_);
 	for (uint32_t i = 0; i < num_vertices_; ++i) {
 		temp_vertex = vlist_local_[i];

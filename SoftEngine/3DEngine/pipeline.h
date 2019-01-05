@@ -9,7 +9,8 @@
 #include"renderlist.h"
 #include"camera.h"
 #include"material.h"
-#include "BHV.h"
+#include "bhv.h"
+#include"bsp.h"
 #include<list>
 #include <limits.h>
 //#include<thread>
@@ -251,7 +252,7 @@ namespace KZEngine {
 		//AABB max
 		KZMath::KZVector4D<float> aabb_max_ = KZMath::KZVector4D<float>(0, 0, 0, 1);
 		//BHV树根节点
-		BHVNodePtr bhv_root_;
+		BHVNodePtr bhv_root_ = nullptr;
 		//投影方式
 		Projection projection_ = Projection::PERSPECTIVE;
 		//场景管理方式

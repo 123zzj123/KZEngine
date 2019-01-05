@@ -68,6 +68,16 @@ namespace KZMath {
 		KZPoint3D p0_;
 		//平面法线
 		KZVector3D n_;
+
+		Plane3DTyp(float p0_x = 0.0f, float p0_y = 0.0f, float p0_z = 0.0f, float n_x = 0.0f, float n_y = 0.0f, float n_z = 0.0f) {
+			p0_.x_ = p0_x;
+			p0_.y_ = p0_y;
+			p0_.z_ = p0_z;
+
+			n_.x_ = n_x;
+			n_.y_ = n_y;
+			n_.z_ = n_z;
+		}
 	}KZPlane3D, *KZPlane3DPtr;
 	//2D参数线段相交
 	bool KZLine2DIntersect(KZLine2DPtr p1, KZLine2DPtr p2, KZPoint2DPtr pt);

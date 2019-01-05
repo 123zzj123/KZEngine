@@ -19,10 +19,18 @@ namespace KZEngine {
 	// BSP分割平面列表
 	struct BSPSplitPlane
 	{
+	public:
 		KZMath::KZPlane3D plane_;
-		uint32_t id = 0;
-		bool mark_ = false;
 		vector<TrianglePtr> relative_tri;
+		uint32_t id_ = 0;
+		bool mark_ = false;
+	public:
+		BSPSplitPlane(const KZMath::KZPlane3D& plane, const TrianglePtr& tri = nullptr, const uint32_t id = 0) {
+			plane_ = plane;
+			relative_tri.push_back(tri);
+			id_ = id;
+			mark_ = true;
+		}
 	};
 
 	class KZBSP {
@@ -40,8 +48,6 @@ namespace KZEngine {
 		static void ChooseBestSplitPlane();
 		static void IniSplitPlaneVec();
 	};
-
-	uint32_t KZBSP::bsp_plane_id = 0;
 }
 
 #endif
