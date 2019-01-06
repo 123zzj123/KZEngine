@@ -11,6 +11,7 @@
 #include"material.h"
 #include "bhv.h"
 #include"bsp.h"
+#include "pass.h"
 #include<list>
 #include <limits.h>
 //#include<thread>
@@ -65,15 +66,17 @@ namespace KZEngine {
 		//创建cube
 		void CreateCube(float width = 1.0f, float length = 1.0f, float height = 1.0f,
 			bool light_cube = false,
-			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, -5), 
-			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
-			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
+			int32_t pass_id = -1,
 			bool is_light = false,
 			float alpha = 1.0f,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, -5),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO,
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1),
 			string shadow_map = "");
 		//创建圆柱
 		void CreateCylinder(float top_radius, float bottom_radius, float height, uint32_t stack, uint32_t slice,
 			const KZEngine::Color& ini_color,
+			int32_t pass_id = -1,
 			bool is_light = false,
 			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0,0,0),
@@ -83,6 +86,7 @@ namespace KZEngine {
 		//创建球体
 		void CreateSphere(float radius, uint32_t stack, uint32_t slice,
 			const KZEngine::Color& ini_color,
+			int32_t pass_id = -1,
 			bool is_light = false,
 			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(0, 0, 0),
@@ -90,16 +94,19 @@ namespace KZEngine {
 			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1),
 			string shadow_map = "");
 		//创建三棱锥
-		void CreatePyramid(const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(2, 0, -7), 
-			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
-			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1), 
+		void CreatePyramid(
+			int32_t pass_id = -1,
 			bool is_light = true,
 			float alpha = 1.0f,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(2, 0, -7),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO,
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1),
 			string shadow_map = "");
 		//创建地形
 		void Create_Terrain(float width, float height, float vscale, 
 			const char* height_map_file_name, const char* texture_map_file_name, 
 			const KZEngine::Color& ini_color, 
+			int32_t pass_id = -1,
 			bool is_light = false,
 			float alpha = 1.0f,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
@@ -170,8 +177,6 @@ namespace KZEngine {
 		void TransformWorldToPer(Projection projection = Projection::PERSPECTIVE);
 		//转化到视口坐标
 		void TransformPerToViewPort();
-		//初始化
-		void Initial();
 		//浮点数版本光栅化与深度测试
 		void RasterizationDepthTest();
 		//整数版本光栅化与深度测试
@@ -191,38 +196,25 @@ namespace KZEngine {
 		//获取场景AABB包围盒
 		void getSceneAABB(bool include_transparent = false);
 	private:
-		//光空间变换矩阵
-		KZMath::KZMatrix44 light_space_matrix_;
+		//多少次pass
+		uint32_t pass_num_ = 0;
+		//当前pass
+		int32_t pass_idx_ = -1;
+		//Pass数组，记录Pass属性
+		vector<Pass*> pass_vec_;
 		//光源数组
 		vector<LightBase*> light_vec_;
 		//bool数组
 		vector<bool> light_active_vec_;
 		//视口宽度
-		uint32_t view_width_ = -1;
+		uint32_t view_width_ = 0;
 		//视口高度
-		uint32_t view_height_ = -1;
+		uint32_t view_height_ = 0;
 		//shadow map buffer高度
-		uint32_t shadow_map_width_ = -1;
+		uint32_t shadow_map_width_ = 0;
 		//shadow map buffer宽度
-		uint32_t shadow_map_height_ = -1;
-		//物体数目
-		uint32_t object_num_ = -1;
-		//透明物体数量
-		uint32_t transparent_object_num_ = -1;
-		//三角形数量
-		uint32_t tri_num_ = -1;
-		//透明三角形数量
-		uint32_t transparent_tri_num_ = -1;
-		//存储普通物体数组
-		vector<KZObject> object_vec_;
-		//存储透明物体数组
-		vector<KZObject> transparent_object_vec_;
-		//渲染队列
-		KZRenderList* render_list_ = nullptr;
-		//对象积极
-		vector<bool> object_active_;
-		//透明对象积极
-		vector<bool> transparent_object_active_;
+		uint32_t shadow_map_height_ = 0;
+		
 		//深度缓冲
 		float* z_buffer_ = nullptr;
 		//深度贴图缓冲
@@ -236,11 +228,11 @@ namespace KZEngine {
 		//渲染窗口句柄
 		HWND hwnd_;
 		//平均fps
-		float fps_;
+		float fps_ = 0.0f;
 		//记录的fps数量
-		float fps_count_;
+		float fps_count_ = 0.0f;
 		//fps记录时间
-		DWORD record_time_;
+		DWORD record_time_ = 0;
 		//材质数组
 		vector<KZEngine::KZMaterial> mat_vec_;
 		//对象id
@@ -261,7 +253,7 @@ namespace KZEngine {
 		//单实例
 		static KZPipeLine* p_instance_;
 		//构造函数
-		KZPipeLine();
+		KZPipeLine(uint32_t renderlist_num = 2);
 		//析构函数
 		~KZPipeLine();
 		//增加材质

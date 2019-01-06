@@ -14,15 +14,18 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 		bhv_root->radius_.y_ = instance->aabb_max_.y_ - instance->aabb_min_.y_;
 		bhv_root->radius_.z_ = instance->aabb_max_.z_ - instance->aabb_min_.z_;
 		bhv_root->world_pos_ = bhv_root->origin_pos_ + bhv_root->radius_ * 0.5f;
-		for (uint32_t i = 0; i < instance->object_num_; ++i) {
-			bhv_root->obj_list_.push_back(&instance->object_vec_[i]);
+		for (uint32_t i = 0; i < instance->pass_num_; i++)
+		{
+			for (uint32_t j = 0; j < instance->pass_vec_[i]->object_num_; ++j) {
+				bhv_root->obj_list_.push_back(instance->pass_vec_[i]->object_vec_[j]);
+			}
+			bhv_root->num_object_ += instance->pass_vec_[i]->object_num_;
 		}
-		for (uint32_t i = 0; i < instance->transparent_object_num_; ++i) {
-			bhv_root->obj_list_.push_back(&instance->transparent_object_vec_[i]);
+		uint32_t num_child = num_divisions * num_divisions * num_divisions;
+		bhv_root->bhv_child = new BHVNodePtr[num_child]();
+		for (uint32_t i = 0; i < num_child; ++i) {
+			bhv_root->bhv_child[i] = nullptr;
 		}
-		bhv_root->num_object_ = instance->object_num_ + instance->transparent_object_num_;
-
-		bhv_root->bhv_child = new BHVNodePtr[num_divisions];
 		BuildSceneBHVTree(bhv_root, level + 1, num_divisions);
 	}
 	else
@@ -49,6 +52,10 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 			cell_z = (uint32_t)((bhv_root->obj_list_[i]->world_pos_.z_ - bhv_root->origin_pos_.z_) / cell_size_z);
 
 			cell_idx = cell_x * num_divisions_power + cell_y * num_divisions + cell_z;
+			if (bhv_root->bhv_child[cell_idx] == nullptr)
+			{
+				bhv_root->bhv_child[cell_idx] = new BHVNode();
+			}
 			bhv_root->bhv_child[cell_idx]->obj_list_.push_back(bhv_root->obj_list_[i]);
 			++bhv_root->bhv_child[cell_idx]->num_object_;
 		}
@@ -57,15 +64,18 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 		for (uint32_t i = 0; i < num_divisions; ++i) {
 			for (uint32_t j = 0; j < num_divisions; ++j) {
 				for (uint32_t k = 0; k < num_divisions; ++k) {
-					bhv_root->bhv_child[cell_idx]->origin_pos_.x_ = bhv_root->origin_pos_.x_ + i * cell_size_x;
-					bhv_root->bhv_child[cell_idx]->origin_pos_.y_ = bhv_root->origin_pos_.y_ + j * cell_size_y;
-					bhv_root->bhv_child[cell_idx]->origin_pos_.z_ = bhv_root->origin_pos_.z_ + k * cell_size_z;
-					bhv_root->bhv_child[cell_idx]->radius_.x_ = cell_size_x;
-					bhv_root->bhv_child[cell_idx]->radius_.y_ = cell_size_y;
-					bhv_root->bhv_child[cell_idx]->radius_.z_ = cell_size_z;
-					bhv_root->bhv_child[cell_idx]->world_pos_ = bhv_root->bhv_child[cell_idx]->origin_pos_ + bhv_root->bhv_child[cell_idx]->radius_ * 0.5f;
+					if (bhv_root->bhv_child[cell_idx] != nullptr) {
+						bhv_root->bhv_child[cell_idx]->origin_pos_.x_ = bhv_root->origin_pos_.x_ + i * cell_size_x;
+						bhv_root->bhv_child[cell_idx]->origin_pos_.y_ = bhv_root->origin_pos_.y_ + j * cell_size_y;
+						bhv_root->bhv_child[cell_idx]->origin_pos_.z_ = bhv_root->origin_pos_.z_ + k * cell_size_z;
+						bhv_root->bhv_child[cell_idx]->radius_.x_ = cell_size_x;
+						bhv_root->bhv_child[cell_idx]->radius_.y_ = cell_size_y;
+						bhv_root->bhv_child[cell_idx]->radius_.z_ = cell_size_z;
+						bhv_root->bhv_child[cell_idx]->world_pos_ = bhv_root->bhv_child[cell_idx]->origin_pos_ + bhv_root->bhv_child[cell_idx]->radius_ * 0.5f;
+						
+						BuildSceneBHVTree(bhv_root->bhv_child[cell_idx], level + 1, num_divisions);
+					}
 					++cell_idx;
-					BuildSceneBHVTree(bhv_root->bhv_child[cell_idx], level + 1, num_divisions);
 				}
 			}
 		}
@@ -110,54 +120,48 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root) {
 		for (int i = 0; i < bhv_root->num_object_; ++i) {
 			uint32_t face_index = 0;
 			for (uint32_t j = 0; j < bhv_root->obj_list_[i]->num_index_; face_index++, j += 3) {
-				KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[j]].pos;
-				if (bhv_root->obj_list_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
-					continue;
-				}
-				else
-				{
-					KZEngine::Triangle tri;
-					uint32_t idx0 = j, idx1 = j + 1, idx2 = j + 2;
-					if (bhv_root->obj_list_[i]->is_light_) {
-						uint32_t light_num = static_cast<uint32_t>(instance->light_vec_.size());
-						for (uint32_t k = 0; k < light_num; ++k) {
-							if (instance->light_active_vec_[k]) {
-								bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].pos,
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].normal);
-								bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].pos,
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].normal);
-								bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].pos,
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].normal);
-							}
-						}
-					}
-					tri.vertex_list[0] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]];
-					tri.vertex_list[1] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]];
-					tri.vertex_list[2] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]];
-					tri.material = bhv_root->obj_list_[i]->mat_id_[face_index];
-					tri.alpha = bhv_root->obj_list_[i]->alpha_;
-					if (bhv_root->obj_list_[i]->alpha_ == 1.0f) {
-						++instance->tri_num_;
-						if (instance->tri_num_ > instance->render_list_->tri_list_.size()) {
-							instance->render_list_->tri_list_.resize(instance->tri_num_ * 2);
-							instance->render_list_->active_tri_.resize(instance->tri_num_ * 2);
-						}
-						instance->render_list_->tri_list_[instance->tri_num_ - 1] = tri;
-						instance->render_list_->active_tri_[instance->tri_num_ - 1] = true;
+				//只处理当前pass
+				if (bhv_root->obj_list_[i]->pass_id_ == instance->pass_idx_) {
+					KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[j]].pos;
+					if (bhv_root->obj_list_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
+						continue;
 					}
 					else
 					{
-						++instance->transparent_tri_num_;
-						if (instance->transparent_tri_num_ > instance->render_list_->transparent_tri_list_.size()) {
-							uint32_t new_size = instance->transparent_tri_num_ << 1; // tri_num_ * 2
-							instance->render_list_->transparent_tri_list_.resize(new_size);
-							instance->render_list_->transparent_active_tri_.resize(new_size);
+						++instance->pass_vec_[instance->pass_idx_]->tri_num_;
+						if (instance->pass_vec_[instance->pass_idx_]->tri_num_ > instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size()) {
+							uint32_t old_len = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size();
+							instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.resize(instance->pass_vec_[instance->pass_idx_]->tri_num_ * 2, nullptr);
+							uint32_t new_len = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size();
+							for (uint32_t i = old_len; i < new_len; ++i)
+							{
+								instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_[i] = new KZEngine::Triangle();
+							}
 						}
-						instance->render_list_->transparent_tri_list_[instance->transparent_tri_num_ - 1] = tri;
-						instance->render_list_->transparent_active_tri_[instance->transparent_tri_num_ - 1] = true;
+						KZEngine::TrianglePtr tri = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_[instance->pass_vec_[instance->pass_idx_]->tri_num_ - 1];
+						uint32_t idx0 = j, idx1 = j + 1, idx2 = j + 2;
+						if (bhv_root->obj_list_[i]->is_light_) {
+							uint32_t light_num = static_cast<uint32_t>(instance->light_vec_.size());
+							for (uint32_t k = 0; k < light_num; ++k) {
+								if (instance->light_active_vec_[k]) {
+									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].pos,
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].normal);
+									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].pos,
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].normal);
+									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].pos,
+										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].normal);
+								}
+							}
+						}
+						tri->vertex_list[0] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]];
+						tri->vertex_list[1] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]];
+						tri->vertex_list[2] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]];
+						tri->material = bhv_root->obj_list_[i]->mat_id_[face_index];
+						tri->alpha = bhv_root->obj_list_[i]->alpha_;
+						tri->active = true;
 					}
 				}
 			}
@@ -180,6 +184,7 @@ void KZBHV::ClearSceneBHVTree(BHVNodePtr& bhv_root_) {
 	//到达叶子节点
 	if (bhv_root_->num_children_ == 0)
 	{
+		delete[] bhv_root_->bhv_child;
 		delete bhv_root_;
 		return;
 	}
@@ -189,6 +194,7 @@ void KZBHV::ClearSceneBHVTree(BHVNodePtr& bhv_root_) {
 		ClearSceneBHVTree(bhv_root_->bhv_child[i]);
 	}
 
+	delete[] bhv_root_->bhv_child;
 	delete bhv_root_;
 	return;
 }

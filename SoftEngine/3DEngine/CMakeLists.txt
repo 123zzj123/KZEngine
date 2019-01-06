@@ -21,6 +21,8 @@ set(SRCS
 	bsp.cpp
 	bhv.h
 	bhv.cpp
+	pass.h
+	pass.cpp
 	test.cpp
 )
 

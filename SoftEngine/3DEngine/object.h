@@ -52,11 +52,11 @@ namespace KZEngine {
 		void Transform(const KZMath::KZMatrix44& matrix);
 	public:
 		//物体id
-		int id_ = -1;
+		int32_t id_ = -1;
 		//物体名字
-		string name_;
+		string name_ = "";
 		//最大半径，计算包围球
-		float max_radius_;
+		float max_radius_ = 0.0f;
 		//物体世界坐标位置
 		KZMath::KZVector4D<float> world_pos_;
 		//物体朝向
@@ -85,6 +85,10 @@ namespace KZEngine {
 		bool has_shadow = true;
 		//材质id
 		vector<int32_t> mat_id_;
+		//是否活跃
+		bool active_ = true;
+		//Pass ID
+		int32_t pass_id_ = -1;
 	private:
 		//
 	};
