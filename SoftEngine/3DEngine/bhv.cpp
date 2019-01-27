@@ -83,7 +83,7 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 }
 
 //BHV树剔除
-void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root) {
+void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 	if (bhv_root == nullptr)
 	{
 		return;
@@ -121,24 +121,24 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root) {
 			uint32_t face_index = 0;
 			for (uint32_t j = 0; j < bhv_root->obj_list_[i]->num_index_; face_index++, j += 3) {
 				//只处理当前pass
-				if (bhv_root->obj_list_[i]->pass_id_ == instance->pass_idx_) {
+				if (bhv_root->obj_list_[i]->pass_id_ == pass_id) {
 					KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[j]].pos;
 					if (bhv_root->obj_list_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 						continue;
 					}
 					else
 					{
-						++instance->pass_vec_[instance->pass_idx_]->tri_num_;
-						if (instance->pass_vec_[instance->pass_idx_]->tri_num_ > instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size()) {
-							uint32_t old_len = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size();
-							instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.resize(instance->pass_vec_[instance->pass_idx_]->tri_num_ * 2, nullptr);
-							uint32_t new_len = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_.size();
+						++instance->pass_vec_[pass_id]->tri_num_;
+						if (instance->pass_vec_[pass_id]->tri_num_ > instance->pass_vec_[pass_id]->render_list_->tri_list_.size()) {
+							uint32_t old_len = instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
+							instance->pass_vec_[pass_id]->render_list_->tri_list_.resize(instance->pass_vec_[pass_id]->tri_num_ * 2, nullptr);
+							uint32_t new_len = instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
 							for (uint32_t i = old_len; i < new_len; ++i)
 							{
-								instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_[i] = new KZEngine::Triangle();
+								instance->pass_vec_[pass_id]->render_list_->tri_list_[i] = new KZEngine::Triangle();
 							}
 						}
-						KZEngine::TrianglePtr tri = instance->pass_vec_[instance->pass_idx_]->render_list_->tri_list_[instance->pass_vec_[instance->pass_idx_]->tri_num_ - 1];
+						KZEngine::TrianglePtr tri = instance->pass_vec_[pass_id]->render_list_->tri_list_[instance->pass_vec_[pass_id]->tri_num_ - 1];
 						uint32_t idx0 = j, idx1 = j + 1, idx2 = j + 2;
 						if (bhv_root->obj_list_[i]->is_light_) {
 							uint32_t light_num = static_cast<uint32_t>(instance->light_vec_.size());
@@ -170,7 +170,7 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root) {
 
 	//该节点未被剔除继续往下剔除
 	for (int i = 0; i < bhv_root->num_children_; ++i) {
-		BHVTreeCulling(bhv_root->bhv_child[i]);
+		BHVTreeCulling(bhv_root->bhv_child[i], pass_id);
 	}
 }
 

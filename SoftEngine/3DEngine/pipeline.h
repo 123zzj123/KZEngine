@@ -13,6 +13,7 @@
 #include"bsp.h"
 #include "pass.h"
 #include<list>
+#include <future>
 #include <limits.h>
 //#include<thread>
 //#include<mutex>
@@ -164,19 +165,19 @@ namespace KZEngine {
 		bool first_mouse_ = false;
 	protected:
 		//场景剔除：物体剔除，背面消除
-		void SceneManageCulling();
+		void SceneManageCulling(int32_t pass_id);
 		//物体消除，包围球测试
-		void OcclusionCulling();
+		void OcclusionCulling(int32_t pass_id);
 		//背面消除
-		void BackfaceCulling();
+		void BackfaceCulling(int32_t pass_id);
 		//三角形裁剪
-		void PolyCulling();
+		void PolyCulling(int32_t pass_id);
 		//转化到世界坐标
-		void TransformModelToWorld();
+		void TransformModelToWorld(int32_t pass_id);
 		//转化到相机坐标
-		void TransformWorldToPer(Projection projection = Projection::PERSPECTIVE);
+		void TransformWorldToPer(int32_t pass_id, Projection projection = Projection::PERSPECTIVE);
 		//转化到视口坐标
-		void TransformPerToViewPort();
+		void TransformPerToViewPort(int32_t pass_id);
 		//浮点数版本光栅化与深度测试
 		void RasterizationDepthTest();
 		//整数版本光栅化与深度测试
@@ -249,6 +250,8 @@ namespace KZEngine {
 		Projection projection_ = Projection::PERSPECTIVE;
 		//场景管理方式
 		SceneManage scene_manage_ = SceneManage::BHV;
+		future<void>* future_pass_arrs_;
+		bool mutiple_thread_ = false;
 	private:
 		//单实例
 		static KZPipeLine* p_instance_;

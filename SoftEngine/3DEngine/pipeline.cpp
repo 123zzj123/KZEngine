@@ -20,6 +20,7 @@ KZPipeLine::KZPipeLine(uint32_t renderlist_num) {
 		pass_vec_.push_back(new Pass());
 	}
 
+	future_pass_arrs_ = new future<void>[pass_num_];
 	view_height_ = 600;
 	view_width_ = 800;
 	shadow_map_width_ = 1024;
@@ -44,6 +45,7 @@ KZPipeLine::~KZPipeLine() {
 		delete pass_vec_[i];
 		pass_vec_[i] = nullptr;
 	}
+	delete[] future_pass_arrs_;
 	delete[] depth_map_buffer_;
 	delete[] z_buffer_;
 	delete[] frame_buffer_;
@@ -988,51 +990,51 @@ void KZPipeLine::addShadowObj(const string& shadow_name, const string& shadow_ma
 }
 
 //转化到世界坐标
-void KZPipeLine::TransformModelToWorld() {
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->object_num_; ++i) {
-		pass_vec_[pass_idx_]->object_vec_[i]->TransformModelToWorldMath();
-		if (calculate_shadow_ == CalCulateShadow::VERTEXMAPPING && pass_vec_[pass_idx_]->object_vec_[i]->has_shadow && pass_vec_[pass_idx_]->object_vec_[i]->world_pos_.y_ > 0)
+void KZPipeLine::TransformModelToWorld(int32_t pass_id) {
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->object_num_; ++i) {
+		pass_vec_[pass_id]->object_vec_[i]->TransformModelToWorldMath();
+		if (calculate_shadow_ == CalCulateShadow::VERTEXMAPPING && pass_vec_[pass_id]->object_vec_[i]->has_shadow && pass_vec_[pass_id]->object_vec_[i]->world_pos_.y_ > 0)
 		{
 			KZMath::KZVector4D<float> light_pos;
 			light_vec_[0]->GetLightPos(light_pos);
-			for (uint32_t j = 0; j < pass_vec_[pass_idx_]->object_vec_[i]->num_vertices_; ++j)
+			for (uint32_t j = 0; j < pass_vec_[pass_id]->object_vec_[i]->num_vertices_; ++j)
 			{
 				//经过点光源与物体中心直线与地面相交参数方程 ps = pl + t * (p0 - pl), 令ps.y = 0;
-				float t = -light_pos.y_ / (pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[j].pos.y_ - light_pos.y_);
-				float temp_x = light_pos.x_ + t * (pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[j].pos.x_ - light_pos.x_);
-				float temp_z = light_pos.z_ + t * (pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[j].pos.z_ - light_pos.z_);
-				pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_.push_back(KZEngine::Vertex(temp_x, 0.0f, temp_z, 128, 128, 128));
+				float t = -light_pos.y_ / (pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[j].pos.y_ - light_pos.y_);
+				float temp_x = light_pos.x_ + t * (pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[j].pos.x_ - light_pos.x_);
+				float temp_z = light_pos.z_ + t * (pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[j].pos.z_ - light_pos.z_);
+				pass_vec_[pass_id]->object_vec_[i]->vlist_tran_.push_back(KZEngine::Vertex(temp_x, 0.0f, temp_z, 128, 128, 128));
 			}
 		}
 	}
 }
 
 //物体消除，包围球测试
-void KZPipeLine::OcclusionCulling() {
+void KZPipeLine::OcclusionCulling(int32_t pass_id) {
 	KZMath::KZVector4D<float> temp_camera_pos;
 	KZMath::KZMatrix44 view;
 	main_camera_.GetViewMatrix(view);
 	float camera_right_over_near = main_camera_.GetViewRight() / main_camera_.GetCameraNearClip();
 	float camera_top_over_near = main_camera_.GetViewTop() / main_camera_.GetCameraNearClip();
 	//不透明物体
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->object_num_; ++i) {
-		temp_camera_pos = view * pass_vec_[pass_idx_]->object_vec_[i]->world_pos_;
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->object_num_; ++i) {
+		temp_camera_pos = view * pass_vec_[pass_id]->object_vec_[i]->world_pos_;
 		//根据远近平面裁剪
-		if ((temp_camera_pos.z_ + pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ < main_camera_.GetCameraFarClip()) || (temp_camera_pos.z_ - pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ > main_camera_.GetCameraNearClip())) {
-			pass_vec_[pass_idx_]->object_vec_[i]->active_ = false;
+		if ((temp_camera_pos.z_ + pass_vec_[pass_id]->object_vec_[i]->max_radius_ < main_camera_.GetCameraFarClip()) || (temp_camera_pos.z_ - pass_vec_[pass_id]->object_vec_[i]->max_radius_ > main_camera_.GetCameraNearClip())) {
+			pass_vec_[pass_id]->object_vec_[i]->active_ = false;
 			continue;
 		}
 		//根据左右平面裁剪
 		float w_test = camera_right_over_near * temp_camera_pos.z_;
-		if ((temp_camera_pos.x_ - pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ > w_test) || (temp_camera_pos.x_ + pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ < -w_test)) {
-			pass_vec_[pass_idx_]->object_vec_[i]->active_ = false;
+		if ((temp_camera_pos.x_ - pass_vec_[pass_id]->object_vec_[i]->max_radius_ > w_test) || (temp_camera_pos.x_ + pass_vec_[pass_id]->object_vec_[i]->max_radius_ < -w_test)) {
+			pass_vec_[pass_id]->object_vec_[i]->active_ = false;
 			continue;
 		}
 
 		//根据上下平面裁剪
 		float h_test = camera_top_over_near * temp_camera_pos.z_;
-		if ((temp_camera_pos.y_ - pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ > h_test) || (temp_camera_pos.y_ + pass_vec_[pass_idx_]->object_vec_[i]->max_radius_ < -h_test)) {
-			pass_vec_[pass_idx_]->object_vec_[i]->active_ = false;
+		if ((temp_camera_pos.y_ - pass_vec_[pass_id]->object_vec_[i]->max_radius_ > h_test) || (temp_camera_pos.y_ + pass_vec_[pass_id]->object_vec_[i]->max_radius_ < -h_test)) {
+			pass_vec_[pass_id]->object_vec_[i]->active_ = false;
 			continue;
 		}
 	}
@@ -1041,55 +1043,55 @@ void KZPipeLine::OcclusionCulling() {
 }
 
 //背面消除
-void KZPipeLine::BackfaceCulling() {
+void KZPipeLine::BackfaceCulling(int32_t pass_id) {
 	//普通物体
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->object_num_; ++i) {
-		if (pass_vec_[pass_idx_]->object_vec_[i]->active_) {
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->object_num_; ++i) {
+		if (pass_vec_[pass_id]->object_vec_[i]->active_) {
 			uint32_t face_index = 0;
-			for (uint32_t j = 0; j < pass_vec_[pass_idx_]->object_vec_[i]->num_index_; face_index++, j += 3) {
-				KZMath::KZVector4D<float> observe_vec = main_camera_.GetCameraPos() - pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[j]].pos;
-				if (pass_vec_[pass_idx_]->object_vec_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
+			for (uint32_t j = 0; j < pass_vec_[pass_id]->object_vec_[i]->num_index_; face_index++, j += 3) {
+				KZMath::KZVector4D<float> observe_vec = main_camera_.GetCameraPos() - pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[j]].pos;
+				if (pass_vec_[pass_id]->object_vec_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 					continue;
 				}
 				else
 				{
-					++pass_vec_[pass_idx_]->tri_num_;
-					if (pass_vec_[pass_idx_]->tri_num_ > pass_vec_[pass_idx_]->render_list_->tri_list_.size()) {
-						uint32_t old_len = pass_vec_[pass_idx_]->render_list_->tri_list_.size();
-						pass_vec_[pass_idx_]->render_list_->tri_list_.resize(pass_vec_[pass_idx_]->tri_num_ * 2, nullptr);
-						uint32_t new_len = pass_vec_[pass_idx_]->render_list_->tri_list_.size();
+					++pass_vec_[pass_id]->tri_num_;
+					if (pass_vec_[pass_id]->tri_num_ > pass_vec_[pass_id]->render_list_->tri_list_.size()) {
+						uint32_t old_len = pass_vec_[pass_id]->render_list_->tri_list_.size();
+						pass_vec_[pass_id]->render_list_->tri_list_.resize(pass_vec_[pass_id]->tri_num_ * 2, nullptr);
+						uint32_t new_len = pass_vec_[pass_id]->render_list_->tri_list_.size();
 						for (uint32_t i = old_len; i < new_len; ++i)
 						{
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i] = new KZEngine::Triangle();
+							pass_vec_[pass_id]->render_list_->tri_list_[i] = new KZEngine::Triangle();
 						}
 					}
-					KZEngine::TrianglePtr tri = pass_vec_[pass_idx_]->render_list_->tri_list_[pass_vec_[pass_idx_]->tri_num_ - 1];
+					KZEngine::TrianglePtr tri = pass_vec_[pass_id]->render_list_->tri_list_[pass_vec_[pass_id]->tri_num_ - 1];
 					uint32_t idx0 = j, idx1 = j + 1, idx2 = j + 2;
-					if (pass_vec_[pass_idx_]->object_vec_[i]->is_light_) {
+					if (pass_vec_[pass_id]->object_vec_[i]->is_light_) {
 						uint32_t light_num = static_cast<uint32_t>(light_vec_.size());
 						for (uint32_t k = 0; k < light_num; ++k) {
 							if (light_active_vec_[k]) {
-								pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx0]].color += 
-									mat_vec_[pass_vec_[pass_idx_]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx0]].pos,
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx0]].normal);
-								pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx1]].color += 
-									mat_vec_[pass_vec_[pass_idx_]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx1]].pos,
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx1]].normal);
-								pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx2]].color += 
-									mat_vec_[pass_vec_[pass_idx_]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx2]].pos,
-										pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx2]].normal);
+								pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx0]].color +=
+									mat_vec_[pass_vec_[pass_id]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx0]].pos,
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx0]].normal);
+								pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx1]].color +=
+									mat_vec_[pass_vec_[pass_id]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx1]].pos,
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx1]].normal);
+								pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx2]].color +=
+									mat_vec_[pass_vec_[pass_id]->object_vec_[i]->mat_id_[face_index]].CalculateFinalColor(light_vec_[k],
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx2]].pos,
+										pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx2]].normal);
 							}
 						}
 					}
-					tri->vertex_list[0] = pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx0]];
-					tri->vertex_list[1] = pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx1]];
-					tri->vertex_list[2] = pass_vec_[pass_idx_]->object_vec_[i]->vlist_tran_[pass_vec_[pass_idx_]->object_vec_[i]->index_[idx2]];
-					tri->material = pass_vec_[pass_idx_]->object_vec_[i]->mat_id_[face_index];
+					tri->vertex_list[0] = pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx0]];
+					tri->vertex_list[1] = pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx1]];
+					tri->vertex_list[2] = pass_vec_[pass_id]->object_vec_[i]->vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->index_[idx2]];
+					tri->material = pass_vec_[pass_id]->object_vec_[i]->mat_id_[face_index];
 					tri->active = true;
-					tri->alpha = pass_vec_[pass_idx_]->object_vec_[i]->alpha_;
+					tri->alpha = pass_vec_[pass_id]->object_vec_[i]->alpha_;
 				}
 			}
 		}
@@ -1098,7 +1100,7 @@ void KZPipeLine::BackfaceCulling() {
 }
 
 //转化到透视坐标
-void KZPipeLine::TransformWorldToPer(Projection projection) {
+void KZPipeLine::TransformWorldToPer(int32_t pass_id, Projection projection) {
 	KZMath::KZMatrix44 view, proj;
 	main_camera_.GetViewMatrix(view);
 	if (projection == Projection::PERSPECTIVE) {
@@ -1109,34 +1111,34 @@ void KZPipeLine::TransformWorldToPer(Projection projection) {
 		main_camera_.GetOrthogonalMatrix(proj);
 	}
 
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->tri_num_; ++i) {
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->tri_num_; ++i) {
 		for (uint32_t j = 0; j < 3; ++j) {
-			pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos = view * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos;
+			pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos = view * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos;
 		}
 	}
-	PolyCulling();
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->tri_num_; ++i) {
-		if (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->active) {
+	PolyCulling(pass_id);
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->tri_num_; ++i) {
+		if (pass_vec_[pass_id]->render_list_->tri_list_[i]->active) {
 			for (uint32_t j = 0; j < 3; ++j) {
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos = proj * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos;
-				float w_inverse = 1 / pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.w_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.x_ *= w_inverse;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.y_ *= w_inverse;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.z_ *= w_inverse;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos = proj * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos;
+				float w_inverse = 1 / pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.w_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.x_ *= w_inverse;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.y_ *= w_inverse;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.z_ *= w_inverse;
 			}
 		}
 	}
 }
 
 //转化到视口坐标
-void KZPipeLine::TransformPerToViewPort() {
+void KZPipeLine::TransformPerToViewPort(int32_t pass_id) {
 	float alpha = 0.5f * view_width_ - 0.5f;
 	float beta = 0.5f * view_height_ - 0.5f;
-	for (uint32_t i = 0; i < pass_vec_[pass_idx_]->tri_num_; ++i) {
-		if (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->active) {
+	for (uint32_t i = 0; i < pass_vec_[pass_id]->tri_num_; ++i) {
+		if (pass_vec_[pass_id]->render_list_->tri_list_[i]->active) {
 			for (uint32_t j = 0; j < 3; ++j) {
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.x_ = alpha + alpha * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.x_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.y_ = beta - beta * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[j].pos.y_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.x_ = alpha + alpha * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.x_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.y_ = beta - beta * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[j].pos.y_;
 			}
 		}
 	}
@@ -1159,12 +1161,31 @@ void KZPipeLine::FrameUpdate() {
 		/*KZMath::KZQuat quat;
 		quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 0, 1), 1);
 		object_vec_[0].RotationQuat(quat);*/
+		if (mutiple_thread_)
+		{
+			int32_t pass_id = pass_idx_;
+			future_pass_arrs_[pass_idx_] = async(launch::async, [pass_id] {
+				KZEngine::KZPipeLine* p_instance = KZEngine::KZPipeLine::GetInstance();
+				//固定管线
+				p_instance->TransformModelToWorld(pass_id);
+				p_instance->SceneManageCulling(pass_id);
+				p_instance->TransformWorldToPer(pass_id);
+				p_instance->TransformPerToViewPort(pass_id);
+			});
+		} else {
+			TransformModelToWorld(pass_idx_);
+			SceneManageCulling(pass_idx_);
+			TransformWorldToPer(pass_idx_);
+			TransformPerToViewPort(pass_idx_);
+		}
+		
+	}
 
-		//固定管线
-		TransformModelToWorld();
-		SceneManageCulling();
-		TransformWorldToPer();
-		TransformPerToViewPort();
+	if (mutiple_thread_)
+	{
+		for (pass_idx_ = 0; pass_idx_ < pass_num_; ++pass_idx_) {
+			future_pass_arrs_[pass_idx_].wait();
+		}
 	}
 
 	for (pass_idx_ = 0; pass_idx_ < pass_num_; ++pass_idx_) {
@@ -3520,8 +3541,8 @@ void KZPipeLine::DrawTopTriFast(const Vertex& vertex0, const Vertex& vertex1, co
 }
 
 //三角形裁剪
-void KZPipeLine::PolyCulling() {
-	uint32_t tri_num = pass_vec_[pass_idx_]->tri_num_;
+void KZPipeLine::PolyCulling(int32_t pass_id) {
+	uint32_t tri_num = pass_vec_[pass_id]->tri_num_;
 	float near_clip = main_camera_.GetCameraNearClip();
 	float far_clip = main_camera_.GetCameraFarClip();
 	float w_factor = main_camera_.GetViewRight() / near_clip;
@@ -3529,34 +3550,34 @@ void KZPipeLine::PolyCulling() {
 	//#pragma omp parallel for
 	for (uint32_t i = 0; i < tri_num; ++i) {
 		//考虑左右截面的裁剪,利用三角形相似
-		float x0_test = w_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.z_;
-		float x1_test = w_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.z_;
-		float x2_test = w_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.z_;
+		float x0_test = w_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.z_;
+		float x1_test = w_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.z_;
+		float x2_test = w_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.z_;
 		//对于左右截面只考虑完全接受或者完全拒绝，即所有点都在视锥体右边或者都在视锥体左边
-		if ((pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.x_ > x0_test
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.x_ > x1_test
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.x_ > x2_test)
-			|| (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.x_ < -x0_test
-				&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.x_ < -x1_test
-				&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.x_ < -x2_test))
+		if ((pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.x_ > x0_test
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.x_ > x1_test
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.x_ > x2_test)
+			|| (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.x_ < -x0_test
+				&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.x_ < -x1_test
+				&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.x_ < -x2_test))
 		{
-			pass_vec_[pass_idx_]->render_list_->tri_list_[i]->active = false;
+			pass_vec_[pass_id]->render_list_->tri_list_[i]->active = false;
 			continue;
 		}
 
 		//考虑上下截面的裁剪，利用三角形相似
-		float y0_test = h_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.z_;
-		float y1_test = h_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.z_;
-		float y2_test = h_factor * pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.z_;
+		float y0_test = h_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.z_;
+		float y1_test = h_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.z_;
+		float y2_test = h_factor * pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.z_;
 		//对于上下截面只考虑完全接受或者完全拒绝，即所有点都在视锥体上边或者都在视锥体下边
-		if ((pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.y_ > y0_test
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.y_ > y1_test
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.y_ > y2_test)
-			|| (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.y_ < -y0_test
-				&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.y_ < -y1_test
-				&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.y_ < -y2_test))
+		if ((pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.y_ > y0_test
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.y_ > y1_test
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.y_ > y2_test)
+			|| (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.y_ < -y0_test
+				&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.y_ < -y1_test
+				&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.y_ < -y2_test))
 		{
-			pass_vec_[pass_idx_]->render_list_->tri_list_[i]->active = false;
+			pass_vec_[pass_id]->render_list_->tri_list_[i]->active = false;
 			continue;
 		}
 
@@ -3571,34 +3592,34 @@ void KZPipeLine::PolyCulling() {
 		bool verts_outside[3] = { false, false, false };
 
 		//对每一个顶点比较z值与远近平面的关系，计数并填入索引
-		if ((pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ < near_clip
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ > far_clip)) {
+		if ((pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ < near_clip
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ > far_clip)) {
 			verts_inside[0] = true;
 			++num_verts_inside;
 		}
-		else if(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ > near_clip)
+		else if(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[0].pos.z_ > near_clip)
 		{
 			verts_outside[0] = true;
 			++num_verts_outside_near_clip;
 		}
 
-		if ((pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ < near_clip
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ > far_clip)) {
+		if ((pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ < near_clip
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ > far_clip)) {
 			verts_inside[1] = true;
 			++num_verts_inside;
 		}
-		else if(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ > near_clip)
+		else if(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[1].pos.z_ > near_clip)
 		{
 			verts_outside[1] = true;
 			++num_verts_outside_near_clip;
 		}
 
-		if ((pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ < near_clip
-			&& pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ > far_clip)) {
+		if ((pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ < near_clip
+			&& pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ > far_clip)) {
 			verts_inside[2] = true;
 			++num_verts_inside;
 		}
-		else if(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ > near_clip)
+		else if(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[2].pos.z_ > near_clip)
 		{
 			verts_outside[2] = true;
 			++num_verts_outside_near_clip;
@@ -3607,7 +3628,7 @@ void KZPipeLine::PolyCulling() {
 		//当所有的顶点都在视锥体外面
 		if (num_verts_inside == 0)
 		{
-			pass_vec_[pass_idx_]->render_list_->tri_list_[i]->active = false;
+			pass_vec_[pass_id]->render_list_->tri_list_[i]->active = false;
 			continue;
 		}
 		//当所有的顶点都在视锥体里面
@@ -3635,81 +3656,81 @@ void KZPipeLine::PolyCulling() {
 
 
 				//根据线段参数方程p = v0_idx + v * t (0 < t < 1)
-				float diff = (near_clip - pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_);
-				KZMath::KZVector4D<float> vec1(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos - pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
+				float diff = (near_clip - pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_);
+				KZMath::KZVector4D<float> vec1(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos - pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
 				float t1 = diff / vec1.z_;
 
 				//根据参数t计算出交点的pos,代替原来顶点的pos
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.x_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t1 * vec1.x_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.y_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t1 * vec1.y_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.z_ = near_clip;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.x_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t1 * vec1.x_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.y_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t1 * vec1.y_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos.z_ = near_clip;
 
 				//根据参数t计算出交点的color,代替原来顶点的color
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
 
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
 
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ -
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ -
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
 
 				//根据线段参数方程p = v0 + v * t (0 < t < 1)
-				KZMath::KZVector4D<float> vec2(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos 
-					- pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
+				KZMath::KZVector4D<float> vec2(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos 
+					- pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
 
 				float t2 = diff / vec2.z_;
 				//根据参数t计算出交点pos，代替原来pos
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.x_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t2 * vec2.x_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.y_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t2 * vec2.y_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.z_ = near_clip;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.x_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t2 * vec2.x_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.y_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t2 * vec2.y_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos.z_ = near_clip;
 
 				//根据参数t计算出交点的color,代替原来顶点的color
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
-					+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
+					+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
 
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
-					+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
+					+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
 
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
-					+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
+					+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
 
 				//默认法线不变，点法线插值计算不值得特别精确用原本点法线代替即可,并且已经计算了光照
 
 				//根据是否有贴图计算交点的uv,代替原来的uv
-				if (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material].has_texture_) {
+				if (pass_vec_[pass_id]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_id]->render_list_->tri_list_[i]->material].has_texture_) {
 
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
 
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
 
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
-						+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
+						+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
 
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
-						+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
+						+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
 				}
 			}
 			//当有两个顶点在视锥体里面,需要重新分割一个三角形
@@ -3728,61 +3749,61 @@ void KZPipeLine::PolyCulling() {
 					v0_idx = 2; v1_idx = 0; v2_idx = 1;
 				}
 
-				Triangle new_tri(*pass_vec_[pass_idx_]->render_list_->tri_list_[i]);
+				Triangle new_tri(*pass_vec_[pass_id]->render_list_->tri_list_[i]);
 
 				//根据线段参数方程p = v0 + v * t (0 < t < 1)
-				float diff = (near_clip - pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_);
-				KZMath::KZVector4D<float> vec1(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos - pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
+				float diff = (near_clip - pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_);
+				KZMath::KZVector4D<float> vec1(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].pos - pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos);
 				float t1 = diff / vec1.z_;
 
-				KZMath::KZVector4D<float> ori_v0_pos = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos;
+				KZMath::KZVector4D<float> ori_v0_pos = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos;
 				//根据参数t计算出交点的pos,代替外部顶点的pos
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t1 * vec1.x_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t1 * vec1.y_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_ = near_clip;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.x_ + t1 * vec1.x_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.y_ + t1 * vec1.y_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].pos.z_ = near_clip;
 
 				//根据参数t计算出交点的color,代替外部顶点的color
-				float ori_v0_r = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_;
-				float ori_v0_g = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_;
-				float ori_v0_b = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_;
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
-					+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
-					+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
+				float ori_v0_r = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_;
+				float ori_v0_g = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_;
+				float ori_v0_b = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_;
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_
+					+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.r_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.r_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_
+					+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.g_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.g_));
 
-				pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_ = 
-					(unsigned char)(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
-					+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ - 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
+				pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_ = 
+					(unsigned char)(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_
+					+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].color.b_ - 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].color.b_));
 
 				//默认法线不变，点法线插值计算不值得特别精确用原本点法线代替即可,并且已经计算了光照
 
-				float ori_v0_u = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_;
-				float ori_v0_v = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_;
+				float ori_v0_u = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_;
+				float ori_v0_v = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_;
 				//根据是否有贴图计算交点的uv,代替原来的uv
-				if (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material].has_texture_)
+				if (pass_vec_[pass_id]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_id]->render_list_->tri_list_[i]->material].has_texture_)
 				{
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.x_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.x_);
 
-					pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_ = 
-						pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
-						+ t1 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ - 
-							pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
+					pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_ = 
+						pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_
+						+ t1 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v1_idx].uv.y_ - 
+							pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx].uv.y_);
 				}
 
 				//新三角形的保留v2不变
-				new_tri.vertex_list[v1_idx] = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v0_idx];
+				new_tri.vertex_list[v1_idx] = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v0_idx];
 
 				//根据线段参数方程p = v0 + v * t (0 < t < 1)
 				//diff = (near_clip - render_list_->tri_list_[i].vertex_list[v0_idx].pos.z_);
-				KZMath::KZVector4D<float> vec2(pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos - ori_v0_pos);
+				KZMath::KZVector4D<float> vec2(pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].pos - ori_v0_pos);
 				float t2 = diff / vec2.z_;
 
 				//根据参数t计算出交点的pos
@@ -3792,31 +3813,31 @@ void KZPipeLine::PolyCulling() {
 
 				//根据参数t计算出交点的color
 				new_tri.vertex_list[v0_idx].color.r_ = (unsigned char)(ori_v0_r +
-					t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ - ori_v0_r));
+					t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.r_ - ori_v0_r));
 				new_tri.vertex_list[v0_idx].color.g_ = (unsigned char)(ori_v0_g +
-					t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ - ori_v0_g));
+					t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.g_ - ori_v0_g));
 				new_tri.vertex_list[v0_idx].color.b_ = (unsigned char)(ori_v0_b +
-					t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ - ori_v0_b));
+					t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].color.b_ - ori_v0_b));
 
 				//默认法线不变，点法线插值计算不值得特别精确用原本点法线代替即可,并且已经计算了光照
-				new_tri.vertex_list[1].normal = pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].normal;
+				new_tri.vertex_list[1].normal = pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].normal;
 
 				//根据是否有贴图计算交点的uv,代替原来的uv
-				if (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_idx_]->render_list_->tri_list_[i]->material].has_texture_)
+				if (pass_vec_[pass_id]->render_list_->tri_list_[i]->material != -1 && mat_vec_[pass_vec_[pass_id]->render_list_->tri_list_[i]->material].has_texture_)
 				{
 					new_tri.vertex_list[v0_idx].uv.x_ = ori_v0_u
-						+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ - ori_v0_u);
+						+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.x_ - ori_v0_u);
 
 					new_tri.vertex_list[v0_idx].uv.y_ = ori_v0_v
-						+ t2 * (pass_vec_[pass_idx_]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ - ori_v0_v);
+						+ t2 * (pass_vec_[pass_id]->render_list_->tri_list_[i]->vertex_list[v2_idx].uv.y_ - ori_v0_v);
 				}
 
 				//将三角形插入渲染队列
-				++pass_vec_[pass_idx_]->tri_num_;
-				if (pass_vec_[pass_idx_]->tri_num_ > pass_vec_[pass_idx_]->render_list_->tri_list_.size()) {
-					pass_vec_[pass_idx_]->render_list_->tri_list_.resize(pass_vec_[pass_idx_]->tri_num_ * 2);
+				++pass_vec_[pass_id]->tri_num_;
+				if (pass_vec_[pass_id]->tri_num_ > pass_vec_[pass_id]->render_list_->tri_list_.size()) {
+					pass_vec_[pass_id]->render_list_->tri_list_.resize(pass_vec_[pass_id]->tri_num_ * 2);
 				}
-				pass_vec_[pass_idx_]->render_list_->tri_list_[pass_vec_[pass_idx_]->tri_num_ - 1] = &new_tri;
+				pass_vec_[pass_id]->render_list_->tri_list_[pass_vec_[pass_id]->tri_num_ - 1] = &new_tri;
 
 			}
 		}
@@ -3845,15 +3866,15 @@ void KZPipeLine::getSceneAABB(bool include_transparent) {
 
 
 //场景剔除：物体剔除，背面消除
-void KZPipeLine::SceneManageCulling() {
+void KZPipeLine::SceneManageCulling(int32_t pass_id) {
 	switch (scene_manage_)
 	{
 	case KZEngine::SceneManage::NONE:
-		OcclusionCulling();
-		BackfaceCulling();
+		OcclusionCulling(pass_id);
+		BackfaceCulling(pass_id);
 		break;
 	case KZEngine::SceneManage::BHV:
-		KZBHV::BHVTreeCulling(bhv_root_);
+		KZBHV::BHVTreeCulling(bhv_root_, pass_id);
 		break;
 	case KZEngine::SceneManage::BSP:
 		break;

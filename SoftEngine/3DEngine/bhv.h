@@ -27,7 +27,7 @@ namespace KZEngine {
 		//建造场景BHV树
 		static void BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num_divisions);
 		//BHV树剔除
-		static void BHVTreeCulling(BHVNodePtr bhv_root);
+		static void BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id);
 		//清除BHV场景树
 		static void ClearSceneBHVTree(BHVNodePtr& bhv_root_);
 	};
