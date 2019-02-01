@@ -4,6 +4,14 @@
 #include"object.h"
 
 namespace KZEngine {
+	enum class BSPTriState
+	{
+		NONE,
+		FRONT,
+		BEHIND,
+		CROSS,
+	};
+
 	//三角形结构体
 	typedef struct TriangleType{
 		Vertex vertex_list[3];
@@ -13,6 +21,7 @@ namespace KZEngine {
 		bool active = false;
 		bool bsp_split = false;
 		uint32_t bsp_split_id = 0;
+		BSPTriState bsp_tri_state = BSPTriState::NONE;
 	}Triangle, *TrianglePtr;
 
 	//渲染列表

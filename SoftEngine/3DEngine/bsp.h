@@ -21,13 +21,13 @@ namespace KZEngine {
 	{
 	public:
 		KZMath::KZPlane3D plane_;
-		vector<TrianglePtr> relative_tri;
+		TrianglePtr relative_tri;
 		uint32_t id_ = 0;
 		bool mark_ = false;
 	public:
 		BSPSplitPlane(const KZMath::KZPlane3D& plane, const TrianglePtr& tri = nullptr, const uint32_t id = 0) {
 			plane_ = plane;
-			relative_tri.push_back(tri);
+			relative_tri = tri;
 			id_ = id;
 			mark_ = true;
 		}
@@ -45,7 +45,7 @@ namespace KZEngine {
 		//Çå³ý³¡¾°BSPÊ÷
 		static void CleanSceneBSPTree(BSPNodePtr& bhv_root);
 	protected:
-		static void ChooseBestSplitPlane();
+		static void ChooseBestSplitPlane(BSPNodePtr& bhv_root);
 		static void IniSplitPlaneVec();
 	};
 }

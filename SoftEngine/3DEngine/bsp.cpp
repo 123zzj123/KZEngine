@@ -25,10 +25,31 @@ void KZBSP::CleanSceneBSPTree(BSPNodePtr& bsp_root) {
 
 }
 
-void KZBSP::ChooseBestSplitPlane() {
+void KZBSP::ChooseBestSplitPlane(BSPNodePtr& bsp_root) {
+	KZPipeLine* instance = KZPipeLine::GetInstance();
 	uint32_t len = split_plane_vec_.size();
-	for (uint32_t i = 0; i < len; ++i) {
-
+	for (uint32_t i = 0; i < len; ++i) 
+	{
+		if (split_plane_vec_[i].mark_) {
+			for (uint32_t j = 0; j < instance->pass_vec_[0]->tri_num_; ++j)
+			{
+				for (uint32_t k = 0; k < 3; ++k)
+				{
+					uint32_t front = 0, behind = 0, in = 0;
+					KZMath::KZVector4D<float> vec = split_plane_vec_[i].relative_tri->vertex_list[0].pos - instance->pass_vec_[0]->render_list_->tri_list_[j]->vertex_list[k].pos;
+					float res = vec.Vector3Dot(split_plane_vec_[i].relative_tri->face_normal);
+					if (res > 0) {
+						++front;
+					}
+					else if (res == 0) {
+						break;
+					}
+					else {
+						++behind;
+					}
+				}
+			}
+		}
 	}
 }
 
