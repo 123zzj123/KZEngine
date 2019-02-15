@@ -14,13 +14,21 @@ namespace KZEngine {
 
 	//三角形结构体
 	typedef struct TriangleType{
+		//顶点数组
 		Vertex vertex_list[3];
+		//法线
 		KZMath::KZVector4D<float> face_normal;
+		//材质id
 		uint32_t material = -1;
+		//透明度
 		float alpha = 1.0f;
+		//三角形裁剪活跃标记
 		bool active = false;
+		//true为结构化面,参与bsp，false为细节面
 		bool bsp_split = false;
+		//bsp分割面id
 		uint32_t bsp_split_id = 0;
+		//记录三角形bsp当前状态，在分割面前面，后面，交叉
 		BSPTriState bsp_tri_state = BSPTriState::NONE;
 	}Triangle, *TrianglePtr;
 

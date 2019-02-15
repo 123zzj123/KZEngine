@@ -9,13 +9,6 @@
 
 namespace KZEngine {
 
-	typedef struct BSPNodeTyp {
-		vector<TrianglePtr> tri_list_;
-		KZMath::KZPlane3D split_plane_;
-		BSPNodeTyp* left_child_;
-		BSPNodeTyp* right_child_;
-	}BSPNode, *BSPNodePtr;
-
 	// BSP分割平面列表
 	struct BSPSplitPlane
 	{
@@ -33,6 +26,13 @@ namespace KZEngine {
 		}
 	};
 
+	typedef struct BSPNodeTyp {
+		vector<TrianglePtr> tri_list_;
+		BSPSplitPlane* split_plane_;
+		BSPNodeTyp* left_child_;
+		BSPNodeTyp* right_child_;
+	}BSPNode, *BSPNodePtr;
+
 	class KZBSP {
 	protected:
 		static uint32_t bsp_plane_id;
@@ -45,7 +45,7 @@ namespace KZEngine {
 		//清除场景BSP树
 		static void CleanSceneBSPTree(BSPNodePtr& bhv_root);
 	protected:
-		static void ChooseBestSplitPlane(BSPNodePtr& bhv_root);
+		static int32_t ChooseBestSplitPlane(BSPNodePtr& bhv_root);
 		static void IniSplitPlaneVec();
 	};
 }
