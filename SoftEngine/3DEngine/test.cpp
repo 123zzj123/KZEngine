@@ -224,6 +224,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	}
 
 	//关闭gdi+
+	KZEngine::KZPipeLine::DeleteInstance();
 	GdiplusShutdown(gdi_plus_token);
 	_CrtDumpMemoryLeaks();
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);

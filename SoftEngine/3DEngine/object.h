@@ -10,6 +10,14 @@
 #include"light.h"
 
 namespace KZEngine {
+	enum class BSPVertexState
+	{
+		NONE,
+		FRONT,
+		BEHIND,
+		INSIDE,
+	};
+
 	//顶点结构体
 	typedef struct VertexType {
 		KZMath::KZVector4D<float> pos;

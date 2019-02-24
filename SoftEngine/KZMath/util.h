@@ -59,6 +59,8 @@ namespace KZMath {
 		KZPoint3D p1_;
 		//3D线段方向向量
 		KZVector3D v_;
+		Line3DTyp(float p0_x = 0.0f, float p0_y = 0.0f, float p0_z = 0.0f, float p1_x = 0.0f, float p1_y = 0.0f, float p1_z = 0.0f):
+			p0_(p0_x, p0_y, p0_z),p1_(p1_x,p1_y,p1_z),v_(p1_x - p0_x, p1_y - p0_y, p1_z - p0_z) {}
 	}KZLine3D, *KZLine3DPtr;
 
 	//参数化3D平面

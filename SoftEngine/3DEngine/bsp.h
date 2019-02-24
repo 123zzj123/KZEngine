@@ -6,6 +6,7 @@
 #include "../KZMath/util.h"
 #include "../KZMath/vector.h"
 #include "renderlist.h"
+#include <map>
 
 namespace KZEngine {
 
@@ -37,6 +38,7 @@ namespace KZEngine {
 	protected:
 		static uint32_t bsp_plane_id;
 		static vector<BSPSplitPlane> split_plane_vec_;
+		static vector<TrianglePtr> divide_tri_vec;
 	public:
 		//建造场景BSP树
 		static void BuildSceneBSPTree(BSPNodePtr& bhv_root, uint32_t level);
@@ -45,8 +47,9 @@ namespace KZEngine {
 		//清除场景BSP树
 		static void CleanSceneBSPTree(BSPNodePtr& bhv_root);
 	protected:
-		static int32_t ChooseBestSplitPlane(BSPNodePtr& bhv_root);
+		static void ChooseBestSplitPlane(BSPNodePtr& bhv_root);
 		static void IniSplitPlaneVec();
+		
 	};
 }
 
