@@ -2,7 +2,6 @@
 #ifndef PASS_H
 #define PASS_H
 
-#include "object.h"
 #include "renderlist.h"
 #include<vector>
 

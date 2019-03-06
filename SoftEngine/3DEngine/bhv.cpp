@@ -14,7 +14,7 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 		bhv_root->radius_.y_ = instance->aabb_max_.y_ - instance->aabb_min_.y_;
 		bhv_root->radius_.z_ = instance->aabb_max_.z_ - instance->aabb_min_.z_;
 		bhv_root->world_pos_ = bhv_root->origin_pos_ + bhv_root->radius_ * 0.5f;
-		for (uint32_t i = 0; i < instance->pass_num_; i++)
+		for (int32_t i = 0; i < instance->pass_num_; i++)
 		{
 			for (uint32_t j = 0; j < instance->pass_vec_[i]->object_num_; ++j) {
 				bhv_root->obj_list_.push_back(instance->pass_vec_[i]->object_vec_[j]);
@@ -46,7 +46,7 @@ void KZBHV::BuildSceneBHVTree(BHVNodePtr& bhv_root, uint32_t level, uint32_t num
 
 		uint32_t num_divisions_power = num_divisions * num_divisions;
 		uint32_t cell_x = 0, cell_y = 0, cell_z = 0, cell_idx = 0;
-		for (uint32_t i = 0; i < bhv_root->num_object_; ++i) {
+		for (int32_t i = 0; i < bhv_root->num_object_; ++i) {
 			cell_x = (uint32_t)((bhv_root->obj_list_[i]->world_pos_.x_ - bhv_root->origin_pos_.x_) / cell_size_x);
 			cell_y = (uint32_t)((bhv_root->obj_list_[i]->world_pos_.y_ - bhv_root->origin_pos_.y_) / cell_size_y);
 			cell_z = (uint32_t)((bhv_root->obj_list_[i]->world_pos_.z_ - bhv_root->origin_pos_.z_) / cell_size_z);
@@ -130,9 +130,9 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 					{
 						++instance->pass_vec_[pass_id]->tri_num_;
 						if (instance->pass_vec_[pass_id]->tri_num_ > instance->pass_vec_[pass_id]->render_list_->tri_list_.size()) {
-							uint32_t old_len = instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
+							uint32_t old_len = (uint32_t)instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
 							instance->pass_vec_[pass_id]->render_list_->tri_list_.resize(instance->pass_vec_[pass_id]->tri_num_ * 2, nullptr);
-							uint32_t new_len = instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
+							uint32_t new_len = (uint32_t)instance->pass_vec_[pass_id]->render_list_->tri_list_.size();
 							for (uint32_t i = old_len; i < new_len; ++i)
 							{
 								instance->pass_vec_[pass_id]->render_list_->tri_list_[i] = new KZEngine::Triangle();

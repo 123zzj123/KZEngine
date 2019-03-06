@@ -55,12 +55,12 @@ void KZBSP::CleanSceneBSPTree(BSPNodePtr& bsp_root) {
 
 void KZBSP::ChooseBestSplitPlane(BSPNodePtr& bsp_root) {
 	
-	uint32_t len = split_plane_vec_.size();
+	uint32_t len = (uint32_t)split_plane_vec_.size();
 	uint32_t best_value = UINT_MAX;
 	int32_t best_bsp_idx = -1;
 	uint32_t cur_value = 0;
 	uint32_t ratio = 5;
-	uint32_t size = bsp_root->tri_list_.size();
+	uint32_t size = (uint32_t)bsp_root->tri_list_.size();
 	for (uint32_t i = 0; i < len; ++i) 
 	{
 		if (!split_plane_vec_[i].mark_) {

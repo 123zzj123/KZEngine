@@ -5,8 +5,6 @@
 #include<windows.h>
 #include<vector>;
 #include"../KZMath/fix32.h"
-#include"object.h"
-#include"renderlist.h"
 #include"camera.h"
 #include"material.h"
 #include "bhv.h"
@@ -198,7 +196,7 @@ namespace KZEngine {
 		void getSceneAABB(bool include_transparent = false);
 	private:
 		//多少次pass
-		uint32_t pass_num_ = 0;
+		int32_t pass_num_ = 0;
 		//当前pass
 		int32_t pass_idx_ = -1;
 		//Pass数组，记录Pass属性

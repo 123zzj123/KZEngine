@@ -53,7 +53,7 @@ Color KZMaterial::CalculateFinalColor(LightBase* light, const KZMath::KZVector4D
 		KZMath::KZVector4D<float> reflect_vec = (vertex_normal * (2.0f * light_vec.Vector3Dot(vertex_normal))) - light_vec;
 		KZMath::KZVector4D<float> observe_vec = camera_pos - vertex_pos;
 		//漫反射与镜面反射
-		return light_color * color_ * kd_ * vertex_normal.Vector3Dot(light_vec) + light_color * color_ * ks_ * pow(max(reflect_vec.Vector3Dot(observe_vec), 0.0f), power_);
+		return light_color * color_ * kd_ * vertex_normal.Vector3Dot(light_vec) + light_color * color_ * ks_ * (float)pow(max(reflect_vec.Vector3Dot(observe_vec), 0.0f), power_);
 	}
 }
 

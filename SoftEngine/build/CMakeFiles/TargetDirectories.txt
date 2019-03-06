@@ -1,4 +1,0 @@
-C:/Users/kobezjzhang/Desktop/open_project/KZEngine/SoftEngine/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/kobezjzhang/Desktop/open_project/KZEngine/SoftEngine/build/CMakeFiles/ZERO_CHECK.dir
-C:/Users/kobezjzhang/Desktop/open_project/KZEngine/SoftEngine/build/KZMath/CMakeFiles/KZMath.dir
-C:/Users/kobezjzhang/Desktop/open_project/KZEngine/SoftEngine/build/3DEngine/CMakeFiles/KZEngine.dir

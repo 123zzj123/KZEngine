@@ -2,6 +2,7 @@
 #ifndef RENDERLIST_H
 #define RENDERLIST_H
 #include"object.h"
+#include "terrian.h"
 
 namespace KZEngine {
 

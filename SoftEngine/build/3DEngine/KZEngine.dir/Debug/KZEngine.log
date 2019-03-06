@@ -1,6 +1,0 @@
-﻿  test.cpp
-c:\users\kobezjzhang\desktop\open_project\kzengine\softengine\3dengine\pipeline.h(6): warning C4067: 预处理器指令后有意外标记 - 应输入换行符
-C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\3DEngine\test.cpp(181): warning C4800: “ATOM”: 将值强制为布尔值“true”或“false”(性能警告)
-c:\users\kobezjzhang\desktop\open_project\kzengine\softengine\3dengine\test.cpp(152): warning C4715: “WndProc”: 不是所有的控件路径都返回值
-  KZEngine.vcxproj -> C:\Users\kobezjzhang\Desktop\open_project\KZEngine\SoftEngine\build\3DEngine\Debug\KZEngine.exe
-  KZEngine.vcxproj -> C:/Users/kobezjzhang/Desktop/open_project/KZEngine/SoftEngine/build/3DEngine/Debug/KZEngine.pdb (Full PDB)

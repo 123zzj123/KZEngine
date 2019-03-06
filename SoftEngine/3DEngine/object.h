@@ -100,6 +100,36 @@ namespace KZEngine {
 	private:
 		//
 	};
+
+	class KZCube final:public KZObject 
+	{
+	public:
+		KZCube(float width, float length, float height, bool light_cube, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale);
+	};
+
+	class KZCylinder final : public KZObject
+	{
+	public:
+		KZCylinder(float top_radius, float bottom_radius, float height, uint32_t stack, uint32_t slice, const KZEngine::Color& ini_color, 
+			const KZMath::KZVector4D<float>& world_pos,
+			const KZMath::KZQuat& quat,
+			const KZMath::KZVector4D<float>& scale);
+	};
+
+	class KZPyramid final : public KZObject
+	{
+	public:
+		KZPyramid(const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale);
+	};
+
+	class KZSphere final : public KZObject
+	{
+	public:
+		KZSphere(float radius, uint32_t stack, uint32_t slice, const KZEngine::Color& ini_color,
+			const KZMath::KZVector4D<float>& world_pos,
+			const KZMath::KZQuat& quat,
+			const KZMath::KZVector4D<float>& scale);
+	};
 }
 
 #endif // !OBJECT_H
