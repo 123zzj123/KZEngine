@@ -2,37 +2,9 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include"../KZMath/util.h"
-#include"../KZMath/vector.h"
-#include"../KZMath/matrix.h"
-#include"../KZMath/quat.h"
-#include<vector>
-#include"light.h"
+#include "mesh.h"
 
 namespace KZEngine {
-	enum class BSPVertexState
-	{
-		NONE,
-		FRONT,
-		BEHIND,
-		INSIDE,
-	};
-
-	//顶点结构体
-	typedef struct VertexType {
-		KZMath::KZVector4D<float> pos;
-		KZMath::KZVector4D<float> normal;
-		KZMath::KZPoint2D uv;
-		Color color;
-
-		VertexType(float x = 0.0f, float y =0.0f, float z = 0.0f, unsigned char r = 255, unsigned char g = 255, unsigned char b = 255)
-		{
-			pos = KZMath::KZVector4D<float>(x, y, z);
-			normal = KZMath::KZVector4D<float>();
-			uv = KZMath::KZPoint2D();
-			color = Color(r, g, b);
-		}
-	}Vertex, *VertexPtr;
 
 	//物体类
 	class KZObject
@@ -58,6 +30,8 @@ namespace KZEngine {
 		void GetObjectAABB(KZMath::KZVector4D<float>&vec_min, KZMath::KZVector4D<float>& vec_max) const;
 		//矩阵转换
 		void Transform(const KZMath::KZMatrix44& matrix);
+		//更新mesh
+		virtual void UpdateMesh() {};
 	public:
 		//物体id
 		int32_t id_ = -1;
@@ -71,20 +45,8 @@ namespace KZEngine {
 		//KZMath::KZVector4D dir_;
 		//物体局部坐标轴
 		KZMath::KZVector4D<float> ux_ = KZMath::KZVector4D<float>(1, 0, 0, 0), uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0), uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
-		//顶点数
-		uint32_t num_vertices_ = 0;
-		//原始顶点列表
-		vector<Vertex> vlist_local_;
-		//变换顶点列表
-		vector<Vertex> vlist_tran_;
-		//面法线
-		vector<KZMath::KZVector4D<float>> face_normal_;
-		//面数量
-		uint32_t num_face_ = 0;
-		//索引数量
-		uint32_t num_index_ = 0;
-		//索引数组
-		vector<uint32_t> index_;
+		//物体mesh
+		KZMesh mesh;
 		//是否光照计算
 		bool is_light_ = false;
 		//物体alpha属性
@@ -97,6 +59,8 @@ namespace KZEngine {
 		bool active_ = true;
 		//Pass ID
 		int32_t pass_id_ = -1;
+		//静态mesh or 动态mesh
+		bool static_mesh_ = true;
 	private:
 		//
 	};

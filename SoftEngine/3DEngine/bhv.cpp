@@ -119,11 +119,11 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 	if (bhv_root->num_children_ == 0) {
 		for (int i = 0; i < bhv_root->num_object_; ++i) {
 			uint32_t face_index = 0;
-			for (uint32_t j = 0; j < bhv_root->obj_list_[i]->num_index_; face_index++, j += 3) {
+			for (uint32_t j = 0; j < bhv_root->obj_list_[i]->mesh.num_index_; face_index++, j += 3) {
 				//只处理当前pass
 				if (bhv_root->obj_list_[i]->pass_id_ == pass_id) {
-					KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[j]].pos;
-					if (bhv_root->obj_list_[i]->face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
+					KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[j]].pos;
+					if (bhv_root->obj_list_[i]->mesh.face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 						continue;
 					}
 					else
@@ -144,21 +144,21 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 							uint32_t light_num = static_cast<uint32_t>(instance->light_vec_.size());
 							for (uint32_t k = 0; k < light_num; ++k) {
 								if (instance->light_active_vec_[k]) {
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].pos,
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]].normal);
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].pos,
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]].normal);
-									bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].pos,
-										bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]].normal);
+									bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx0]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx0]].pos,
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx0]].normal);
+									bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx1]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx1]].pos,
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx1]].normal);
+									bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx2]].color += instance->mat_vec_[bhv_root->obj_list_[i]->mat_id_[face_index]].CalculateFinalColor(instance->light_vec_[k],
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx2]].pos,
+										bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx2]].normal);
 								}
 							}
 						}
-						tri->vertex_list[0] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx0]];
-						tri->vertex_list[1] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx1]];
-						tri->vertex_list[2] = bhv_root->obj_list_[i]->vlist_tran_[bhv_root->obj_list_[i]->index_[idx2]];
+						tri->vertex_list[0] = bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx0]];
+						tri->vertex_list[1] = bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx1]];
+						tri->vertex_list[2] = bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[idx2]];
 						tri->material = bhv_root->obj_list_[i]->mat_id_[face_index];
 						tri->alpha = bhv_root->obj_list_[i]->alpha_;
 						tri->active = true;

@@ -17,12 +17,12 @@ KZTerrian::KZTerrian(float width, float height, float vscale, const char* height
 		uy_ = KZMath::KZVector4D<float>(0, 1, 0, 0);
 		uz_ = KZMath::KZVector4D<float>(0, 0, 1, 0);
 
-		num_vertices_ = h_img_height_ * h_img_width_;
-		num_face_ = (h_img_height_ - 1) * (h_img_width_ - 1) * 2;
-		num_index_ = num_face_ * 3;
+		mesh.num_vertices_ = h_img_height_ * h_img_width_;
+		mesh.num_face_ = (h_img_height_ - 1) * (h_img_width_ - 1) * 2;
+		mesh.num_index_ = mesh.num_face_ * 3;
 
-		vlist_local_.resize(num_vertices_);
-		index_.reserve(num_index_);
+		mesh.vlist_local_.resize(mesh.num_vertices_);
+		mesh.index_.reserve(mesh.num_index_);
 
 		//三角形列步长
 		float col_step = 0.0f;
@@ -55,30 +55,30 @@ KZTerrian::KZTerrian(float width, float height, float vscale, const char* height
 		{
 			for (uint32_t j = 0; j < h_img_width_; ++j)
 			{
-				vlist_local_[vertex_idx].pos.x_ = (i * row_step - half_width);
+				mesh.vlist_local_[vertex_idx].pos.x_ = (i * row_step - half_width);
 				height_map_.GetSingleChannelColor(i, j, value);
-				vlist_local_[vertex_idx].pos.y_ = vscale * (value / 255.0f);
-				vlist_local_[vertex_idx].pos.z_ = (j * col_step - half_height);
-				vlist_local_[vertex_idx].pos.w_ = 1;
+				mesh.vlist_local_[vertex_idx].pos.y_ = vscale * (value / 255.0f);
+				mesh.vlist_local_[vertex_idx].pos.z_ = (j * col_step - half_height);
+				mesh.vlist_local_[vertex_idx].pos.w_ = 1;
 
-				vlist_local_[vertex_idx].color = ini_color;
+				mesh.vlist_local_[vertex_idx].color = ini_color;
 
 				if (texture_map_file_name != "")
 				{
-					vlist_local_[vertex_idx].uv.x_ = i * uv_row_step;
-					vlist_local_[vertex_idx].uv.y_ = j * uv_col_step;
+					mesh.vlist_local_[vertex_idx].uv.x_ = i * uv_row_step;
+					mesh.vlist_local_[vertex_idx].uv.y_ = j * uv_col_step;
 				}
 
 				if (i != h_img_height_ - 1 || j != h_img_width_ - 1)
 				{
 					uint32_t base_index = vertex_idx;
-					index_.push_back(base_index);
-					index_.push_back(base_index + h_img_width_);
-					index_.push_back(base_index + 1);
+					mesh.index_.push_back(base_index);
+					mesh.index_.push_back(base_index + h_img_width_);
+					mesh.index_.push_back(base_index + 1);
 
-					index_.push_back(base_index + 1);
-					index_.push_back(base_index + h_img_width_);
-					index_.push_back(base_index + h_img_width_ + 1);
+					mesh.index_.push_back(base_index + 1);
+					mesh.index_.push_back(base_index + h_img_width_);
+					mesh.index_.push_back(base_index + h_img_width_ + 1);
 				}
 
 				++vertex_idx;
@@ -93,4 +93,8 @@ KZTerrian::KZTerrian(float width, float height, float vscale, const char* height
 			RotationQuat(quat);
 		}
 	}
+}
+
+void KZTerrian::UpdateMesh() {
+
 }

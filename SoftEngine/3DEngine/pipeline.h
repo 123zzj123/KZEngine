@@ -108,6 +108,7 @@ namespace KZEngine {
 			int32_t pass_id = -1,
 			bool is_light = false,
 			float alpha = 1.0f,
+			bool is_static = true,
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO
 			);
@@ -194,6 +195,8 @@ namespace KZEngine {
 		void addShadowObj(const string& shadow_name, const string& shadow_map_texture, const KZMath::KZVector4D<float>& ori_world_pos, const float radius);
 		//获取场景AABB包围盒
 		void getSceneAABB(bool include_transparent = false);
+		//更新动态Mesh
+		void UpdateObjMesh(int32_t pass_id);
 	private:
 		//多少次pass
 		int32_t pass_num_ = 0;

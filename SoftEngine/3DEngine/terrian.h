@@ -10,6 +10,8 @@ namespace KZEngine {
 	public:
 		KZTerrian(float width, float height, float vscale, const char* height_map_file_name, const char* texture_map_file_name,
 			const KZEngine::Color& ini_color, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat);
+		//¸üÐÂmesh
+		void UpdateMesh() override;
 	public:
 		float width;
 		float height;
