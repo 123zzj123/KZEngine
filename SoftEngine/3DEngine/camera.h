@@ -4,6 +4,7 @@
 #include"../KZMath/util.h"
 #include"../KZMath/vector.h"
 #include"../KZMath/matrix.h"
+#include <vector>
 
 namespace KZEngine {
 	const float kYaw = -90.0f;
@@ -115,6 +116,36 @@ namespace KZEngine {
 		//更新uvn
 		void UpdateCameraVectors();
 		//
+	};
+
+	class KZCameraManager
+	{
+	public:
+		//获取或删除单实例
+		static KZCameraManager* GetInstance() {
+			if (p_instance_ == nullptr) {
+				p_instance_ = new KZCameraManager();
+			}
+			return p_instance_;
+		}
+
+		//删除单实例
+		static void DeleteInstance() {
+			if (p_instance_) {
+				delete p_instance_;
+			}
+		}
+		KZCamera* GetCameraInstance(uint32_t idx);
+		bool SetMainCamera(uint32_t idx);
+	private:
+		KZCameraManager();
+		~KZCameraManager();
+		//主摄像机id
+		uint32_t main_camera_id_;
+		//单实例
+		static KZCameraManager* p_instance_;
+		//摄像机数组
+		vector<KZCamera*> camera_arr_;
 	};
 }
 #endif // !CAMERA_H

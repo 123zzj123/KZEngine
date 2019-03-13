@@ -136,7 +136,7 @@ KZCameraManager::~KZCameraManager() {
 	}
 }
 
-//摄像机的获取只能按顺序获取,若该id的摄像机不为空，直接返回，若该id的摄像机为空，且符合递增，新建摄像机实例，否则返回空指针
+//摄像机的获取只能按顺序获取
 KZCamera* KZCameraManager::GetCameraInstance(uint32_t idx)
 {
 	uint32_t size = (uint32_t)camera_arr_.size();
@@ -148,17 +148,4 @@ KZCamera* KZCameraManager::GetCameraInstance(uint32_t idx)
 		return nullptr;
 	}
 	return camera_arr_[idx];
-}
-
-//设置主摄像机的id,设置可能失败,因为摄像机不存在
-bool KZCameraManager::SetMainCamera(uint32_t idx) {
-	uint32_t size = (uint32_t)camera_arr_.size();
-	if (idx >= size) {
-		return false;
-	}
-	else {
-		main_camera_id_ = idx;
-		return true;
-	}
-	
 }

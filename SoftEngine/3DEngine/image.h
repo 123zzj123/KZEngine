@@ -28,10 +28,14 @@ namespace KZEngine {
 		inline uint32_t GetWidth() const{ return width_; }
 		//获取高度
 		inline uint32_t GetHeight() const{ return height_; }
-		//获取指定位置像素
+		//获取指定位置像素,行列
 		inline void GetPixel(uint32_t x, uint32_t y, Color& pixel) const { pixel = pixel_[y * width_ + x]; }
-		//获取指定位置单通道的颜色值
+		//获取指定位置像素,顶点索引
+		inline void GetPixel(uint32_t idx, Color& pixel) const { pixel = pixel_[idx]; }
+		//获取指定位置单通道的颜色值,行列
 		inline void GetSingleChannelColor(uint32_t x, uint32_t y, uint32_t& value) const { value = (uint32_t)pixel_[y * width_ + x].r_; }
+		//获取指定位置单通道的颜色值,顶点索引
+		inline void GetSingleChannelColor(uint32_t idx, uint32_t& value) const { value = (uint32_t)pixel_[idx].r_; }
 		//设置mipmap链下一层的图片
 		void SetMipMapImage(KZImage& next) const;
 	private:
