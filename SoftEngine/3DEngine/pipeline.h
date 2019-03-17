@@ -155,7 +155,7 @@ namespace KZEngine {
 		}
 	public:
 		//主摄像机
-		KZCamera main_camera_;
+		KZCamera* main_camera_;
 		//鼠标上一位置的x
 		int last_pos_x_;
 		//鼠标上一位置的y

@@ -136,6 +136,7 @@ namespace KZEngine {
 			}
 		}
 		KZCamera* GetCameraInstance(uint32_t idx);
+		KZCamera* GetMainCameraInstance();
 		bool SetMainCamera(uint32_t idx);
 	private:
 		KZCameraManager();

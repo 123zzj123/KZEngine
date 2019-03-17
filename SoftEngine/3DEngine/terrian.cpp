@@ -107,21 +107,35 @@ KZQuadTerrian::KZQuadTerrian(float width, float height, float vscale, const char
 	width_ = width;
 	height_ = height;
 	vscale_ = vscale;
+	col_step_ = 0.0f;
+	row_step_ = 0.0f;
+	
+	if (h_img_width_ > 1)
+	{
+		col_step_ = width_ / (float)(h_img_width_ - 1);
+	}
+
+	if (h_img_height_ > 1)
+	{
+		row_step_ = height_ / (float)(h_img_height_ - 1);
+	}
+
 	uint32_t diff_num = h_img_height_ * h_img_width_;
 	node_state_table_ = new bool[diff_num]();
-	root_node_.level_ = 0;
-	root_node_.side_len_ = h_img_width_;
-	root_node_.vertex_idx_ = (diff_num) >> 1;
-	BuildQuadTree(&root_node_, 1, diff_num);
-	IniQuadTreeRough(&root_node_, 1, diff_num);
+	root_node_ = new KZQuadTerrianNode();
+	root_node_->level_ = 0;
+	root_node_->side_len_ = h_img_width_ - 1;
+	root_node_->vertex_idx_ = (diff_num) >> 1;
+	BuildQuadTree(root_node_, 1, diff_num);
+	IniQuadTreeRough(root_node_, 1, diff_num);
 	UpdateMesh();
 }
 
 void KZQuadTerrian::UpdateMesh() {
 	mesh.vlist_local_.clear();
 	mesh.index_.clear();
-	uint32_t queue_id = 1;
-	process_queue_[queue_id].push(&root_node_);
+	uint32_t queue_id = 0;
+	process_queue_[queue_id].push(root_node_);
 	while (!process_queue_[queue_id].empty())
 	{
 		uint32_t size = process_queue_[queue_id].size();
@@ -129,22 +143,56 @@ void KZQuadTerrian::UpdateMesh() {
 		{
 			KZQuadTerrianNode* cur_node = process_queue_[queue_id].front();
 			process_queue_[queue_id].pop();
-			if (!InSideView(cur_node))
+			if (EvalTerrianNode(cur_node) && EvalTerrianNode(cur_node))
 			{
-				continue;
-			}
-			if (!EvalTerrianNode(cur_node))
-			{
+				//通过评价系统
+				node_state_table_[cur_node->vertex_idx_] = true;
+				for (uint32_t i = 0; i < 4; ++i)
+				{
+					node_state_table_[cur_node->child_node_[i]->vertex_idx_] = true;
+				}
 
+
+				if (queue_id == 0)
+				{
+					for (uint32_t i = 0; i < 4; ++i)
+					{
+						process_queue_[1].push(cur_node->child_node_[i]);
+					}
+				}
+				else
+				{
+					for (uint32_t i = 0; i < 4; ++i)
+					{
+						process_queue_[0].push(cur_node->child_node_[i]);
+					}
+				}
+			}
+			else
+			{
+				//不通过评价系统
+				node_state_table_[cur_node->vertex_idx_] = true;
+				for (uint32_t i = 0; i < 4; ++i)
+				{
+					node_state_table_[cur_node->child_node_[i]->vertex_idx_] = false;
+				}
 			}
 
 		}
 		
+		if (queue_id == 1)
+		{
+			queue_id = 0;
+		}
+		else
+		{
+			queue_id = 1;
+		}
 	}
 
 }
 
-bool KZQuadTerrian::InSideView(KZQuadTerrianNode* node) {
+bool KZQuadTerrian::EvalTerrianNode(KZQuadTerrianNode* node) {
 	if (node == nullptr)
 	{
 		return false;
@@ -152,31 +200,64 @@ bool KZQuadTerrian::InSideView(KZQuadTerrianNode* node) {
 
 	float half_width = width_ / 2;
 	float half_height = height_ / 2;
-	//三角形列步长
-	float col_step = 0.0f;
-	//三角形行步长
-	float row_step = 0.0f;
-
-	if (h_img_width_ > 1)
-	{
-		col_step = width_ / (float)(h_img_width_ - 1);
-	}
-
-	if (h_img_height_ > 1)
-	{
-		row_step = height_ / (float)(h_img_height_ - 1);
-	}
 
 	uint32_t row = node->vertex_idx_ / h_img_width_;
 	uint32_t col = node->vertex_idx_ % h_img_height_;
-	KZMath::KZVector4D<float> center_pos(col * col_step - half_width, 0.0f, row * row_step - half_height);
+	KZMath::KZVector4D<float> center_pos(col * col_step_ - half_width, 0.0f, row * row_step_ - half_height);
 	center_pos += world_pos_;
-	//float camera_right_over_near = main_camera_.GetViewRight() / main_camera_.GetCameraNearClip();
-	//float camera_top_over_near = main_camera_.GetViewTop() / main_camera_.GetCameraNearClip();
+	KZCamera* main_camera = KZCameraManager::GetInstance()->GetMainCameraInstance();
+	float camera_right_over_near = main_camera->GetViewRight() / main_camera->GetCameraNearClip();
+	float camera_top_over_near = main_camera->GetViewTop() / main_camera->GetCameraNearClip();
+	KZMath::KZMatrix44 view;
+	main_camera->GetViewMatrix(view);
+	center_pos = view * center_pos;
+	uint32_t half_len = (node->side_len_ >> 1);
+	//根据远近平面裁剪
+	if ((center_pos.z_ + half_len * row_step_ < main_camera->GetCameraFarClip()) || (center_pos.z_ - half_len * row_step_ > main_camera->GetCameraNearClip())) {
+		return false;
+	}
+	//根据左右平面裁剪
+	float w_test = camera_right_over_near * center_pos.z_;
+	if ((center_pos.x_ - half_len * col_step_ > w_test) || (center_pos.x_ + half_len * col_step_ < -w_test)) {
+		return false;
+	}
+
+	KZMath::KZVector4D<float> cam_pos = main_camera->GetCameraPos();
+	float dis_to_cam = (center_pos.x_ > 0 ? center_pos.x_ : -center_pos.x_) + (center_pos.z_ > 0 ? center_pos.z_ : -center_pos.z_);
+	//通过评价函数
+	if (dis_to_cam / (node->side_len_ * node->rough_ * kFactor) > 1) {
+		return false;
+	}
+
+	return true;
 }
 
-bool KZQuadTerrian::EvalTerrianNode(KZQuadTerrianNode* node) {
-	return false;
+bool KZQuadTerrian::EvalNeighbor(KZQuadTerrianNode* node) {
+	if (node->level_ == 0)
+	{
+		return true;
+	}
+	else
+	{
+		bool result = true;
+		uint32_t row = node->vertex_idx_ / h_img_width_;
+		uint32_t col = node->vertex_idx_ % h_img_height_;
+		if (col > node->side_len_)
+		{
+			result &= node_state_table_[node->vertex_idx_ - node->side_len_];
+		}
+		if (col + node->side_len_ < h_img_width_) {
+			result &= node_state_table_[node->vertex_idx_ + node->side_len_];
+		}
+		if (row > node->side_len_)
+		{
+			result &= node_state_table_[node->vertex_idx_ - node->side_len_ * h_img_width_];
+		}
+		if (row + node->side_len_ < h_img_width_) {
+			result &= node_state_table_[node->vertex_idx_ + node->side_len_ * h_img_width_];
+		}
+		return result;
+	}
 }
 
 void KZQuadTerrian::BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num) {
@@ -193,7 +274,7 @@ void KZQuadTerrian::BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint3
 	diff_num >> 1;
 	uint32_t left_up_vertex_idx = root->vertex_idx_ - diff_num;
 	uint32_t right_down_vertex_idx = root->vertex_idx_ + diff_num;
-	uint32_t child_len = h_img_width_ >> level + 1;
+	uint32_t child_len = root->side_len_ >> 1;
 	root->child_node_[0] = new KZQuadTerrianNode();
 	root->child_node_[0]->level_ = level;
 	root->child_node_[0]->side_len_ = child_len;
@@ -203,7 +284,7 @@ void KZQuadTerrian::BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint3
 	root->child_node_[1] = new KZQuadTerrianNode();
 	root->child_node_[1]->level_ = level;
 	root->child_node_[1]->side_len_ = child_len;
-	root->child_node_[1]->level_ = root->child_node_[0]->vertex_idx_ + child_len - 1;
+	root->child_node_[1]->level_ = root->child_node_[0]->vertex_idx_ + child_len;
 	BuildQuadTree(root->child_node_[1], level + 1, diff_num);
 
 	root->child_node_[4] = new KZQuadTerrianNode();
@@ -215,7 +296,7 @@ void KZQuadTerrian::BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint3
 	root->child_node_[3] = new KZQuadTerrianNode();
 	root->child_node_[3]->level_ = level;
 	root->child_node_[3]->side_len_ = child_len;
-	root->child_node_[3]->level_ = root->child_node_[4]->vertex_idx_ - child_len + 1;
+	root->child_node_[3]->level_ = root->child_node_[4]->vertex_idx_ - child_len;
 	BuildQuadTree(root->child_node_[3], level + 1,diff_num);
 
 }

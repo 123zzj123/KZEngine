@@ -150,6 +150,11 @@ KZCamera* KZCameraManager::GetCameraInstance(uint32_t idx)
 	return camera_arr_[idx];
 }
 
+KZCamera* KZCameraManager::GetMainCameraInstance()
+{
+	return camera_arr_[main_camera_id_];
+}
+
 //设置主摄像机的id,设置可能失败,因为摄像机不存在
 bool KZCameraManager::SetMainCamera(uint32_t idx) {
 	uint32_t size = (uint32_t)camera_arr_.size();

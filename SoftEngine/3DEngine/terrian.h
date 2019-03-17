@@ -3,10 +3,11 @@
 
 #include "object.h"
 #include "image.h"
+#include "camera.h"
 #include <queue>
 
 namespace KZEngine {
-	class KZPipeLine;
+	const float kFactor = 1.0f;
 
 	class KZTerrian : public KZObject
 	{
@@ -18,6 +19,8 @@ namespace KZEngine {
 		float width_;
 		float height_;
 		float vscale_;
+		float col_step_;
+		float row_step_;
 		uint32_t h_img_height_;
 		uint32_t h_img_width_;
 		KZImage height_map_;
@@ -39,7 +42,7 @@ namespace KZEngine {
 			//子节点
 			KZQuadTerrianNode* child_node_[4];
 		};
-		KZQuadTerrianNode root_node_;
+		KZQuadTerrianNode* root_node_;
 		queue<KZQuadTerrianNode*> process_queue_[2];
 		bool* node_state_table_;
 		uint32_t max_level_;
@@ -49,7 +52,7 @@ namespace KZEngine {
 		//更新mesh
 		void UpdateMesh() override;
 	protected:
-		bool InSideView(KZQuadTerrianNode* node);
+		bool EvalNeighbor(KZQuadTerrianNode* node);
 		bool EvalTerrianNode(KZQuadTerrianNode* node);
 		void BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);
 		void IniQuadTreeRough(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);

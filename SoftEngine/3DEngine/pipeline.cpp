@@ -3,7 +3,8 @@ using namespace KZEngine;
 
 //构造函数
 KZPipeLine::KZPipeLine(uint32_t renderlist_num) {
-	main_camera_.GetCameraPos().Set(1.5f, 1.5f, 3);
+	main_camera_ = KZEngine::KZCameraManager::GetInstance()->GetMainCameraInstance();
+	main_camera_->GetCameraPos().Set(1.5f, 1.5f, 3);
 	LightBase* point_light = new PointLight(Color(255, 255, 0), KZMath::KZVector4D<float>(0, 10, -20), 1.0, 0.0f, 0.0f);
 	LightBase* ambient_light = new AmbientLight(Color(255, 255, 0));
 	LightBase* direction_light = new DirectionLight(Color(255, 255, 0), KZMath::KZVector4D<float>(-1, 0, 0));
@@ -571,14 +572,14 @@ void KZPipeLine::TransformModelToWorld(int32_t pass_id) {
 void KZPipeLine::OcclusionCulling(int32_t pass_id) {
 	KZMath::KZVector4D<float> temp_camera_pos;
 	KZMath::KZMatrix44 view;
-	main_camera_.GetViewMatrix(view);
-	float camera_right_over_near = main_camera_.GetViewRight() / main_camera_.GetCameraNearClip();
-	float camera_top_over_near = main_camera_.GetViewTop() / main_camera_.GetCameraNearClip();
+	main_camera_->GetViewMatrix(view);
+	float camera_right_over_near = main_camera_->GetViewRight() / main_camera_->GetCameraNearClip();
+	float camera_top_over_near = main_camera_->GetViewTop() / main_camera_->GetCameraNearClip();
 	//不透明物体
 	for (uint32_t i = 0; i < pass_vec_[pass_id]->object_num_; ++i) {
 		temp_camera_pos = view * pass_vec_[pass_id]->object_vec_[i]->world_pos_;
 		//根据远近平面裁剪
-		if ((temp_camera_pos.z_ + pass_vec_[pass_id]->object_vec_[i]->max_radius_ < main_camera_.GetCameraFarClip()) || (temp_camera_pos.z_ - pass_vec_[pass_id]->object_vec_[i]->max_radius_ > main_camera_.GetCameraNearClip())) {
+		if ((temp_camera_pos.z_ + pass_vec_[pass_id]->object_vec_[i]->max_radius_ < main_camera_->GetCameraFarClip()) || (temp_camera_pos.z_ - pass_vec_[pass_id]->object_vec_[i]->max_radius_ > main_camera_->GetCameraNearClip())) {
 			pass_vec_[pass_id]->object_vec_[i]->active_ = false;
 			continue;
 		}
@@ -607,7 +608,7 @@ void KZPipeLine::BackfaceCulling(int32_t pass_id) {
 		if (pass_vec_[pass_id]->object_vec_[i]->active_) {
 			uint32_t face_index = 0;
 			for (uint32_t j = 0; j < pass_vec_[pass_id]->object_vec_[i]->mesh.num_index_; face_index++, j += 3) {
-				KZMath::KZVector4D<float> observe_vec = main_camera_.GetCameraPos() - pass_vec_[pass_id]->object_vec_[i]->mesh.vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->mesh.index_[j]].pos;
+				KZMath::KZVector4D<float> observe_vec = main_camera_->GetCameraPos() - pass_vec_[pass_id]->object_vec_[i]->mesh.vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->mesh.index_[j]].pos;
 				if (pass_vec_[pass_id]->object_vec_[i]->mesh.face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 					continue;
 				}
@@ -660,13 +661,13 @@ void KZPipeLine::BackfaceCulling(int32_t pass_id) {
 //转化到透视坐标
 void KZPipeLine::TransformWorldToPer(int32_t pass_id, Projection projection) {
 	KZMath::KZMatrix44 view, proj;
-	main_camera_.GetViewMatrix(view);
+	main_camera_->GetViewMatrix(view);
 	if (projection == Projection::PERSPECTIVE) {
-		main_camera_.GetPerspectiveMatrix(proj);
+		main_camera_->GetPerspectiveMatrix(proj);
 	}
 	else if(projection == Projection::ORTHOGONAL)
 	{
-		main_camera_.GetOrthogonalMatrix(proj);
+		main_camera_->GetOrthogonalMatrix(proj);
 	}
 
 	for (uint32_t i = 0; i < pass_vec_[pass_id]->tri_num_; ++i) {
@@ -3101,10 +3102,10 @@ void KZPipeLine::DrawTopTriFast(const Vertex& vertex0, const Vertex& vertex1, co
 //三角形裁剪
 void KZPipeLine::PolyCulling(int32_t pass_id) {
 	uint32_t tri_num = pass_vec_[pass_id]->tri_num_;
-	float near_clip = main_camera_.GetCameraNearClip();
-	float far_clip = main_camera_.GetCameraFarClip();
-	float w_factor = main_camera_.GetViewRight() / near_clip;
-	float h_factor = main_camera_.GetViewTop() / near_clip;
+	float near_clip = main_camera_->GetCameraNearClip();
+	float far_clip = main_camera_->GetCameraFarClip();
+	float w_factor = main_camera_->GetViewRight() / near_clip;
+	float h_factor = main_camera_->GetViewTop() / near_clip;
 	//#pragma omp parallel for
 	for (uint32_t i = 0; i < tri_num; ++i) {
 		//考虑左右截面的裁剪,利用三角形相似

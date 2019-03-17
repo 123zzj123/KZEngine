@@ -16,6 +16,7 @@ using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
 
 KZEngine::KZPipeLine*  KZEngine::KZPipeLine::p_instance_ = NULL;
+KZEngine::KZCameraManager* KZEngine::KZCameraManager::p_instance_ = NULL;
 float g_average_fps = 0.0f;
 
 VOID CALLBACK TimerProc(HWND hwnd, UINT message, UINT_PTR iTimerID, DWORD dwTime)
@@ -38,25 +39,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		//w
 		case 0x57: 
 		{
-			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessKeyboard(KZEngine::CameraMovement::FORWARD, 0.02f);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_->ProcessKeyboard(KZEngine::CameraMovement::FORWARD, 0.02f);
 			break;
 		}
 		//a
 		case 0x41: 
 		{
-			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessKeyboard(KZEngine::CameraMovement::LEFT, 0.02f);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_->ProcessKeyboard(KZEngine::CameraMovement::LEFT, 0.02f);
 			break;
 		}
 		//s
 		case 0x53: 
 		{
-			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessKeyboard(KZEngine::CameraMovement::BACKWARD, 0.02f);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_->ProcessKeyboard(KZEngine::CameraMovement::BACKWARD, 0.02f);
 			break;
 		}
 		//d
 		case 0x44: 
 		{
-			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessKeyboard(KZEngine::CameraMovement::RIGHT, 0.02f);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_->ProcessKeyboard(KZEngine::CameraMovement::RIGHT, 0.02f);
 			break;
 		}
 		//0
@@ -99,7 +100,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			int y_pos = GET_Y_LPARAM(lParam);
 			float x_offset = (float)(x_pos - KZEngine::KZPipeLine::GetInstance()->last_pos_x_);
 			float y_offset = (float)(y_pos - KZEngine::KZPipeLine::GetInstance()->last_pos_y_);
-			KZEngine::KZPipeLine::GetInstance()->main_camera_.ProcessMouseMovement(x_offset, y_offset);
+			KZEngine::KZPipeLine::GetInstance()->main_camera_->ProcessMouseMovement(x_offset, y_offset);
 			KZEngine::KZPipeLine::GetInstance()->last_pos_x_ = x_pos;
 			KZEngine::KZPipeLine::GetInstance()->last_pos_y_ = y_pos;
 		}
@@ -225,6 +226,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	//关闭gdi+
 	KZEngine::KZPipeLine::DeleteInstance();
+	KZEngine::KZCameraManager::DeleteInstance();
 	GdiplusShutdown(gdi_plus_token);
 	_CrtDumpMemoryLeaks();
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);

@@ -89,11 +89,11 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 		return;
 	}
 	KZPipeLine* instance = KZPipeLine::GetInstance();
-	float camera_right_over_near = instance->main_camera_.GetViewRight() / instance->main_camera_.GetCameraNearClip();
-	float camera_top_over_near = instance->main_camera_.GetViewTop() / instance->main_camera_.GetCameraNearClip();
+	float camera_right_over_near = instance->main_camera_->GetViewRight() / instance->main_camera_->GetCameraNearClip();
+	float camera_top_over_near = instance->main_camera_->GetViewTop() / instance->main_camera_->GetCameraNearClip();
 	KZMath::KZVector4D<float> temp_camera_pos;
 	KZMath::KZMatrix44 view;
-	instance->main_camera_.GetViewMatrix(view);
+	instance->main_camera_->GetViewMatrix(view);
 	temp_camera_pos = view * bhv_root->world_pos_;
 
 	//根据左右平面裁剪
@@ -101,7 +101,7 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 	//根据上下平面裁剪
 	float h_test = camera_top_over_near * temp_camera_pos.z_;
 
-	if (temp_camera_pos.z_ + bhv_root->radius_.z_ < instance->main_camera_.GetCameraFarClip() || temp_camera_pos.z_ - bhv_root->radius_.z_ > instance->main_camera_.GetCameraNearClip())
+	if (temp_camera_pos.z_ + bhv_root->radius_.z_ < instance->main_camera_->GetCameraFarClip() || temp_camera_pos.z_ - bhv_root->radius_.z_ > instance->main_camera_->GetCameraNearClip())
 	{
 		return;
 	}
@@ -122,7 +122,7 @@ void KZBHV::BHVTreeCulling(BHVNodePtr bhv_root, int32_t pass_id) {
 			for (uint32_t j = 0; j < bhv_root->obj_list_[i]->mesh.num_index_; face_index++, j += 3) {
 				//只处理当前pass
 				if (bhv_root->obj_list_[i]->pass_id_ == pass_id) {
-					KZMath::KZVector4D<float> observe_vec = instance->main_camera_.GetCameraPos() - bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[j]].pos;
+					KZMath::KZVector4D<float> observe_vec = instance->main_camera_->GetCameraPos() - bhv_root->obj_list_[i]->mesh.vlist_tran_[bhv_root->obj_list_[i]->mesh.index_[j]].pos;
 					if (bhv_root->obj_list_[i]->mesh.face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 						continue;
 					}
