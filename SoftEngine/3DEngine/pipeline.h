@@ -23,6 +23,12 @@ namespace KZEngine {
 		ORTHOGONAL,
 	};
 
+	enum class RenderMode
+	{
+		NORMAL,
+		WIREFRAME,
+	};
+
 	enum class CalCulateShadow
 	{
 		NONE,
@@ -247,10 +253,11 @@ namespace KZEngine {
 		KZMath::KZVector4D<float> aabb_max_ = KZMath::KZVector4D<float>(0, 0, 0, 1);
 		//BHV树根节点
 		BHVNodePtr bhv_root_ = nullptr;
-		//投影方式
-		Projection projection_ = Projection::PERSPECTIVE;
 		//场景管理方式
 		SceneManage scene_manage_ = SceneManage::BHV;
+		//渲染模式，正常or线框
+		RenderMode render_mode_ = RenderMode::WIREFRAME;
+		//多线程
 		future<void>* future_pass_arrs_;
 		bool mutiple_thread_ = false;
 	private:

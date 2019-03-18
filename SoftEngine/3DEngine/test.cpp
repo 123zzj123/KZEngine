@@ -192,20 +192,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	KZEngine::KZPipeLine* p_instance = KZEngine::KZPipeLine::GetInstance();
 	p_instance->SetCalculateShadow(KZEngine::CalCulateShadow::NONE);
-	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(0, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
+	p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(0, 0, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(4, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(-2, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//shadow_texture/cube_shadow.png
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, true, -1, false, 1.0f, KZMath::KZVector4D<float>(0, 10, -20));
-	//p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(0, 0, -5));
-	p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(4, 0, -5));
+	p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(0, 0, -5));
+	//p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(4, 0, -5));
 	//p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(-2, 0, -5));
 	//p_instance->CreateCylinder(0.6f, 0.6f, 1.0f, 4, 8, KZEngine::Color(255, 255, 0), -1, false, 1.0f, KZMath::KZVector4D<float>(2.0f, -1.0f, -5), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1),"shadow_texture/sphere_shadow.png");
 	//shadow_texture/sphere_shadow.png
 	//p_instance->Create_Terrain(12, 12, 4, "height_map_texture/cs1.bmp", "terrain_map_texture/terrain3.jpg", KZEngine::Color(255, 255, 255), -1, false, 1.0f, KZMath::KZVector4D<float>(0, -4, -10), KZMath::KZQuat::ZERO);
 	//terrain_map_texture/terrain1.jpg
 	//p_instance->CreatePyramid();
-	p_instance->SetSceneManage(KZEngine::SceneManage::BHV);
+	p_instance->SetSceneManage(KZEngine::SceneManage::NONE);
 	if (!IniWindowClass(hInstance)) {
 		return false;
 	}

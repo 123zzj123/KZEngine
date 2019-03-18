@@ -143,7 +143,7 @@ void KZQuadTerrian::UpdateMesh() {
 		{
 			KZQuadTerrianNode* cur_node = process_queue_[queue_id].front();
 			process_queue_[queue_id].pop();
-			if (EvalTerrianNode(cur_node) && EvalTerrianNode(cur_node))
+			if (EvalTerrianNode(cur_node) && EvalNeighbor(cur_node))
 			{
 				//通过评价系统
 				node_state_table_[cur_node->vertex_idx_] = true;
@@ -221,8 +221,6 @@ bool KZQuadTerrian::EvalTerrianNode(KZQuadTerrianNode* node) {
 	if ((center_pos.x_ - half_len * col_step_ > w_test) || (center_pos.x_ + half_len * col_step_ < -w_test)) {
 		return false;
 	}
-
-	KZMath::KZVector4D<float> cam_pos = main_camera->GetCameraPos();
 	float dis_to_cam = (center_pos.x_ > 0 ? center_pos.x_ : -center_pos.x_) + (center_pos.z_ > 0 ? center_pos.z_ : -center_pos.z_);
 	//通过评价函数
 	if (dis_to_cam / (node->side_len_ * node->rough_ * kFactor) > 1) {
@@ -242,6 +240,7 @@ bool KZQuadTerrian::EvalNeighbor(KZQuadTerrianNode* node) {
 		bool result = true;
 		uint32_t row = node->vertex_idx_ / h_img_width_;
 		uint32_t col = node->vertex_idx_ % h_img_height_;
+		uint32_t diff_idx = node->side_len_ * h_img_width_;
 		if (col > node->side_len_)
 		{
 			result &= node_state_table_[node->vertex_idx_ - node->side_len_];
@@ -251,10 +250,10 @@ bool KZQuadTerrian::EvalNeighbor(KZQuadTerrianNode* node) {
 		}
 		if (row > node->side_len_)
 		{
-			result &= node_state_table_[node->vertex_idx_ - node->side_len_ * h_img_width_];
+			result &= node_state_table_[node->vertex_idx_ - diff_idx];
 		}
 		if (row + node->side_len_ < h_img_width_) {
-			result &= node_state_table_[node->vertex_idx_ + node->side_len_ * h_img_width_];
+			result &= node_state_table_[node->vertex_idx_ + diff_idx];
 		}
 		return result;
 	}

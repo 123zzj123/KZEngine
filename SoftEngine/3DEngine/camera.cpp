@@ -50,8 +50,8 @@ void KZCamera::GetOrthogonalMatrix(KZMath::KZMatrix44& matrix) {
 	matrix.m03_ = -(right_ + left_) / (right_ - left_);
 	matrix.m11_ = 2 / (top_ - bottom_);
 	matrix.m13_ = -(top_ + bottom_) / (top_ - bottom_);
-	matrix.m22_ = 2 / (near_clip_z_ - far_clip_z_);
-	matrix.m23_ = (near_clip_z_ + far_clip_z_) / (near_clip_z_ - far_clip_z_);
+	matrix.m22_ = 2 / (-near_clip_z_ + far_clip_z_);
+	matrix.m23_ = (-near_clip_z_ - far_clip_z_) / (-near_clip_z_ + far_clip_z_);
 }
 
 //获取透视投影矩阵
@@ -152,7 +152,7 @@ KZCamera* KZCameraManager::GetCameraInstance(uint32_t idx)
 
 KZCamera* KZCameraManager::GetMainCameraInstance()
 {
-	return camera_arr_[main_camera_id_];
+	return GetCameraInstance(0);
 }
 
 //设置主摄像机的id,设置可能失败,因为摄像机不存在

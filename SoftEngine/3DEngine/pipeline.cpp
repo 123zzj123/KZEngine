@@ -603,12 +603,14 @@ void KZPipeLine::OcclusionCulling(int32_t pass_id) {
 
 //背面消除
 void KZPipeLine::BackfaceCulling(int32_t pass_id) {
+	KZMath::KZVector4D<float>& cam_pos = main_camera_->GetCameraPos();
+	KZMath::KZVector4D<float> observe_vec;
 	//普通物体
 	for (uint32_t i = 0; i < pass_vec_[pass_id]->object_num_; ++i) {
 		if (pass_vec_[pass_id]->object_vec_[i]->active_) {
 			uint32_t face_index = 0;
 			for (uint32_t j = 0; j < pass_vec_[pass_id]->object_vec_[i]->mesh.num_index_; face_index++, j += 3) {
-				KZMath::KZVector4D<float> observe_vec = main_camera_->GetCameraPos() - pass_vec_[pass_id]->object_vec_[i]->mesh.vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->mesh.index_[j]].pos;
+				observe_vec = cam_pos - pass_vec_[pass_id]->object_vec_[i]->mesh.vlist_tran_[pass_vec_[pass_id]->object_vec_[i]->mesh.index_[j]].pos;
 				if (pass_vec_[pass_id]->object_vec_[i]->mesh.face_normal_[face_index].Vector3Dot(observe_vec) < 0) {
 					continue;
 				}
@@ -1148,38 +1150,41 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 					//mutex_buffer_[z_buffer_index].lock();
 
 					z_buffer_[z_buffer_index] = z_cur;
-					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
-					if (has_texture) {
-						/*float one_over_z_cur = 1 / z_cur;
-						float s_cord = s_cur * one_over_z_cur;
-						float t_cord = t_cur * one_over_z_cur;
-						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
-						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
-						float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
-						float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
-						Color texture_color;
-						mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level, texture_color);
-						final_color = final_color * texture_color;
-					}
-					//draw point
-					//uint32_t dist = j * view_width_ * 3 + k * 3;
-					uint32_t dist = z_buffer_index * 3;
-					if (alpha == 1.0f && final_color.a_ != 0) 
-					{
-						frame_buffer_[dist] = final_color.b_;//Blue
-						frame_buffer_[dist + 1] = final_color.g_;//Green
-						frame_buffer_[dist + 2] = final_color.r_;//Red 
-					}
-					else if(alpha != 1.0f && final_color.a_ != 0)
-					{
-						frame_buffer_[dist] = (unsigned char)(alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist]);//Blue
-						frame_buffer_[dist + 1] = (unsigned char)(alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1]);//Green
-						frame_buffer_[dist + 2] = (unsigned char)(alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2]);//Red 
-					}
+					if ((render_mode_ == RenderMode::WIREFRAME && (k == xs || k == xe)) || render_mode_ == RenderMode::NORMAL) {
+						Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
+						if (has_texture) {
+							/*float one_over_z_cur = 1 / z_cur;
+							float s_cord = s_cur * one_over_z_cur;
+							float t_cord = t_cur * one_over_z_cur;
+							s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
+							t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
+							final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
+							float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
+							float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
+							Color texture_color;
+							mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level, texture_color);
+							final_color = final_color * texture_color;
+						}
+						//draw point
+						//uint32_t dist = j * view_width_ * 3 + k * 3;
+						uint32_t dist = z_buffer_index * 3;
+						if (alpha == 1.0f && final_color.a_ != 0)
+						{
+							frame_buffer_[dist] = final_color.b_;//Blue
+							frame_buffer_[dist + 1] = final_color.g_;//Green
+							frame_buffer_[dist + 2] = final_color.r_;//Red 
+						}
+						else if (alpha != 1.0f && final_color.a_ != 0)
+						{
+							frame_buffer_[dist] = (unsigned char)(alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist]);//Blue
+							frame_buffer_[dist + 1] = (unsigned char)(alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1]);//Green
+							frame_buffer_[dist + 2] = (unsigned char)(alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2]);//Red 
+						}
 
-					//失败的多线程光栅化
-					//mutex_buffer_[z_buffer_index].unlock();
+						//失败的多线程光栅化
+						//mutex_buffer_[z_buffer_index].unlock();
+					}
+					
 				}
 			}
 			z_cur += delta_zx;
@@ -1503,40 +1508,43 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 					//mutex_buffer_[z_buffer_index].lock();
 
 					z_buffer_[z_buffer_index] = z_cur;
-					Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
-					if (has_texture) {
-						/*float one_over_z_cur = 1 / z_cur;
-						float s_cord = s_cur * one_over_z_cur;
-						float t_cord = t_cur * one_over_z_cur;
-						s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
-						t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
-						final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
-						float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
-						float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
-						Color texture_color;
-						mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level, texture_color);
-						final_color = final_color * texture_color;
-					}
-					//draw point
-					//uint32_t dist = j * view_width_ * 3 + k * 3;
-					uint32_t dist = z_buffer_index * 3;
-					//draw point
+					if ((render_mode_ == RenderMode::WIREFRAME && (k == xs || k == xe)) || render_mode_ == RenderMode::NORMAL) {
+						Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
+						if (has_texture) {
+							/*float one_over_z_cur = 1 / z_cur;
+							float s_cord = s_cur * one_over_z_cur;
+							float t_cord = t_cur * one_over_z_cur;
+							s_cord = s_cord < 0 ? 0 : s_cord > 1 ? 1 : s_cord;
+							t_cord = t_cord < 0 ? 0 : t_cord > 1 ? 1 : t_cord;
+							final_color = final_color * mat_vec_[mat_id].GetTextureColor(s_cord, t_cord);*/
+							float s_cord = s_cur < 0 ? 0 : s_cur > 1 ? 1 : s_cur;
+							float t_cord = t_cur < 0 ? 0 : t_cur > 1 ? 1 : t_cur;
+							Color texture_color;
+							mat_vec_[mat_id].GetTextureColor(s_cord, t_cord, cur_level, texture_color);
+							final_color = final_color * texture_color;
+						}
+						//draw point
+						//uint32_t dist = j * view_width_ * 3 + k * 3;
+						uint32_t dist = z_buffer_index * 3;
+						//draw point
 
-					if (alpha == 1.0f && final_color.a_ != 0)
-					{
-						frame_buffer_[dist] = final_color.b_;//Blue
-						frame_buffer_[dist + 1] = final_color.g_;//Green
-						frame_buffer_[dist + 2] = final_color.r_;//Red 
-					}
-					else if(alpha != 1.0f && final_color.a_ != 0)
-					{
-						frame_buffer_[dist] = (unsigned char)(alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist]);//Blue
-						frame_buffer_[dist + 1] = (unsigned char)(alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1]);//Green
-						frame_buffer_[dist + 2] = (unsigned char)(alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2]);//Red 
-					}
+						if (alpha == 1.0f && final_color.a_ != 0)
+						{
+							frame_buffer_[dist] = final_color.b_;//Blue
+							frame_buffer_[dist + 1] = final_color.g_;//Green
+							frame_buffer_[dist + 2] = final_color.r_;//Red 
+						}
+						else if (alpha != 1.0f && final_color.a_ != 0)
+						{
+							frame_buffer_[dist] = (unsigned char)(alpha * final_color.b_ + (1 - alpha) * frame_buffer_[dist]);//Blue
+							frame_buffer_[dist + 1] = (unsigned char)(alpha * final_color.g_ + (1 - alpha) * frame_buffer_[dist + 1]);//Green
+							frame_buffer_[dist + 2] = (unsigned char)(alpha * final_color.r_ + (1 - alpha) * frame_buffer_[dist + 2]);//Red 
+						}
 
-					//失败的多线程光栅化
-					//mutex_buffer_[z_buffer_index].unlock();
+						//失败的多线程光栅化
+						//mutex_buffer_[z_buffer_index].unlock();
+					}
+					
 				}
 				z_cur += delta_zx;
 				//限制颜色范围
