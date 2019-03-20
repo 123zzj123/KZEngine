@@ -109,6 +109,9 @@ KZQuadTerrian::KZQuadTerrian(float width, float height, float vscale, const char
 	vscale_ = vscale;
 	col_step_ = 0.0f;
 	row_step_ = 0.0f;
+
+	mesh.vlist_local_.resize(h_img_height_ * h_img_width_);
+	mesh.index_.resize((h_img_height_ - 1) * (h_img_width_ - 1) * 6);
 	
 	if (h_img_width_ > 1)
 	{
@@ -176,6 +179,7 @@ void KZQuadTerrian::UpdateMesh() {
 				{
 					node_state_table_[cur_node->child_node_[i]->vertex_idx_] = false;
 				}
+				AddNodeToMesh(cur_node);
 			}
 
 		}
@@ -271,6 +275,7 @@ void KZQuadTerrian::BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint3
 	}
 
 	diff_num >> 1;
+	root->diff_num_ = diff_num;
 	uint32_t left_up_vertex_idx = root->vertex_idx_ - diff_num;
 	uint32_t right_down_vertex_idx = root->vertex_idx_ + diff_num;
 	uint32_t child_len = root->side_len_ >> 1;
@@ -370,4 +375,220 @@ void KZQuadTerrian::GetMaxLevel(uint32_t img_len) {
 		img_len >> 1;
 		++max_level_;
 	}
+}
+
+void KZQuadTerrian::AddNodeToMesh(KZQuadTerrianNode* node) {
+	uint32_t row = node->vertex_idx_ / h_img_width_;
+	uint32_t col = node->vertex_idx_ % h_img_height_;
+	uint32_t diff_idx = node->side_len_ * h_img_width_;
+	uint32_t left_up_vertex_idx_ = node->vertex_idx_ - node->diff_num_;
+	uint32_t right_down_vertex_idx = node->vertex_idx_ + node->diff_num_;
+
+	//首先保证节点中心和四个角点加入
+	uint32_t row_up = row - node->side_len_;
+	uint32_t row_down = row + node->side_len_;
+	uint32_t col_left = col - node->side_len_;
+	uint32_t col_right = col + node->side_len_;
+	uint32_t value = 0;
+	float half_width = width_ / 2;
+	float half_height = height_ / 2;
+
+	float scale_factor = vscale_ / 255.0f;
+
+	float x_left = col_left * col_step_ - half_width;
+	float x_right = col_right * col_step_ - half_width;
+	float x_mid = col * col_step_ - half_width;
+	float z_up = row_up * row_step_ - half_height;
+	float z_down = row_down * row_step_ - half_height;
+	float z_mid = row * row_step_ - half_height;
+
+	uint32_t idx_begin = mesh.num_vertices_;
+
+	//左上角的顶点
+	mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_left;
+	height_map_.GetSingleChannelColor(row_up, col_left, value);
+	mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+	mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_up;
+	++mesh.num_vertices_;
+
+	//右上角的顶点
+	mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_right;
+	height_map_.GetSingleChannelColor(row_up, col_right, value);
+	mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+	mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_up;
+	++mesh.num_vertices_;
+
+	//中间的顶点
+	mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_mid;
+	height_map_.GetSingleChannelColor(row, col, value);
+	mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+	mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_mid;
+	++mesh.num_vertices_;
+
+	//左下角的顶点
+	mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_left;
+	height_map_.GetSingleChannelColor(row_down, col_left, value);
+	mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+	mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_down;
+	++mesh.num_vertices_;
+
+	//右下角的顶点
+	mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_right;
+	height_map_.GetSingleChannelColor(row_down, col_right, value);
+	mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+	mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_down;
+	++mesh.num_vertices_;
+
+	if ((row > node->side_len_ && node_state_table_[node->vertex_idx_ - diff_idx]) || (row < node->side_len_))
+	{
+		mesh.index_[mesh.num_index_] = idx_begin;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 1;
+		++mesh.num_index_;
+
+		// 增加两个面
+		mesh.num_face_ += 2;
+
+		//上方边的中点加入
+		mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_mid;
+		height_map_.GetSingleChannelColor(row_up, col, value);
+		mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+		mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_up;
+		++mesh.num_vertices_;
+	}
+	else
+	{
+		mesh.index_[mesh.num_index_] = idx_begin;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 1;
+		++mesh.num_index_;
+
+		// 增加一个面
+		mesh.num_face_ += 1;
+	}
+
+	if ((col > node->side_len_ && node_state_table_[node->vertex_idx_ - node->side_len_]) || (col < node->side_len_))
+	{
+		mesh.index_[mesh.num_index_] = idx_begin;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 3;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+
+		// 增加两个面
+		mesh.num_face_ += 2;
+
+		//左边的中点加入
+		mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_left;
+		height_map_.GetSingleChannelColor(row, col_left, value);
+		mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+		mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_mid;
+		++mesh.num_vertices_;
+	}
+	else
+	{
+		mesh.index_[mesh.num_index_] = idx_begin;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 3;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+
+		// 增加一个面
+		mesh.num_face_ += 1;
+	}
+
+	if ((col + node->side_len_ < h_img_width_ && node_state_table_[node->vertex_idx_ + node->side_len_]) || col + node->side_len_ > h_img_width_)
+	{
+		mesh.index_[mesh.num_index_] = idx_begin + 1;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 4;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+
+		// 增加两个面
+		mesh.num_face_ += 2;
+
+		//右边的中点加入
+		mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_right;
+		height_map_.GetSingleChannelColor(row, col_right, value);
+		mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+		mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_mid;
+		++mesh.num_vertices_;
+	}
+	else
+	{
+		mesh.index_[mesh.num_index_] = idx_begin + 1;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 4;
+		++mesh.num_index_;
+
+		// 增加一个面
+		mesh.num_face_ += 1;
+	}
+
+	if ((row + node->side_len_ < h_img_width_ && node_state_table_[node->vertex_idx_ + diff_idx]) || (row + node->side_len_ > h_img_width_))
+	{
+		mesh.index_[mesh.num_index_] = idx_begin + 3;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = mesh.num_vertices_;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 4;
+		++mesh.num_index_;
+
+		// 增加两个面
+		mesh.num_face_ += 2;
+
+		//下边的中点加入
+		mesh.vlist_local_[mesh.num_vertices_].pos.x_ = x_mid;
+		height_map_.GetSingleChannelColor(row_down, col, value);
+		mesh.vlist_local_[mesh.num_vertices_].pos.y_ = scale_factor * value;
+		mesh.vlist_local_[mesh.num_vertices_].pos.z_ = z_down;
+		++mesh.num_vertices_;
+	}
+	else
+	{
+		mesh.index_[mesh.num_index_] = idx_begin + 3;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 4;
+		++mesh.num_index_;
+		mesh.index_[mesh.num_index_] = idx_begin + 2;
+		++mesh.num_index_;
+
+		// 增加一个面
+		mesh.num_face_ += 1;
+	}
+
 }

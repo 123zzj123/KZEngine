@@ -39,6 +39,8 @@ namespace KZEngine {
 			uint32_t side_len_;
 			//节点粗糙程度
 			uint32_t rough_;
+			//与左上角右下角节点序号差值
+			uint32_t diff_num_;
 			//子节点
 			KZQuadTerrianNode* child_node_[4];
 		};
@@ -57,6 +59,7 @@ namespace KZEngine {
 		void BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);
 		void IniQuadTreeRough(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);
 		void GetMaxLevel(uint32_t img_len);
+		void AddNodeToMesh(KZQuadTerrianNode* node);
 	};
 }
 

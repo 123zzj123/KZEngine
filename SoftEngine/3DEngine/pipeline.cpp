@@ -1150,7 +1150,7 @@ void KZPipeLine::DrawBottomTri(const Vertex& v0, const Vertex& v1, const Vertex&
 					//mutex_buffer_[z_buffer_index].lock();
 
 					z_buffer_[z_buffer_index] = z_cur;
-					if ((render_mode_ == RenderMode::WIREFRAME && (k == xs || k == xe)) || render_mode_ == RenderMode::NORMAL) {
+					if ((render_mode_ == RenderMode::WIREFRAME && (j == y_end || (k == xs || k == xe))) || render_mode_ == RenderMode::NORMAL) {
 						Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
 						if (has_texture) {
 							/*float one_over_z_cur = 1 / z_cur;
@@ -1508,7 +1508,7 @@ void KZPipeLine::DrawTopTri(const Vertex& v0, const Vertex& v1, const Vertex& v2
 					//mutex_buffer_[z_buffer_index].lock();
 
 					z_buffer_[z_buffer_index] = z_cur;
-					if ((render_mode_ == RenderMode::WIREFRAME && (k == xs || k == xe)) || render_mode_ == RenderMode::NORMAL) {
+					if ((render_mode_ == RenderMode::WIREFRAME && (j == y_end + 1 || (k == xs || k == xe))) || render_mode_ == RenderMode::NORMAL) {
 						Color final_color(static_cast<unsigned char>(r_cur), static_cast<unsigned char>(g_cur), static_cast<unsigned char>(b_cur));
 						if (has_texture) {
 							/*float one_over_z_cur = 1 / z_cur;
