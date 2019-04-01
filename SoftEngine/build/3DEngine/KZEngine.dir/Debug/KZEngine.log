@@ -1,4 +1,0 @@
-﻿  object.cpp
-D:\TencentLearning\KZEngine\KZEngine\SoftEngine\3DEngine\object.cpp(66): warning C4267: “初始化”: 从“size_t”转换到“uint32_t”，可能丢失数据
-  KZEngine.vcxproj -> D:\TencentLearning\KZEngine\KZEngine\SoftEngine\build\3DEngine\Debug\KZEngine.exe
-  KZEngine.vcxproj -> D:/TencentLearning/KZEngine/KZEngine/SoftEngine/build/3DEngine/Debug/KZEngine.pdb (Full PDB)
