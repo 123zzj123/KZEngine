@@ -13,7 +13,7 @@ namespace KZEngine {
 		//法线
 		KZMath::KZVector4D<float> face_normal;
 		//材质id
-		uint32_t material = -1;
+		int32_t material = -1;
 		//透明度
 		float alpha = 1.0f;
 		//三角形裁剪活跃标记

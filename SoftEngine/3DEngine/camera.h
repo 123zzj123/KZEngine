@@ -26,11 +26,11 @@ namespace KZEngine {
 	{
 	public:
 		//构造函数
-		KZCamera(const KZMath::KZVector4D<float>& pos_in = KZMath::KZVector4D<float>(0, 0, 3), float fov = 45.0f, float aspect = (3.0f/2.0f), float near = 1.0f, float far = 30.0f);
+		KZCamera(const KZMath::KZVector4D<float>& pos_in = KZMath::KZVector4D<float>(0, 0, 3), float fov = 45.0f, float aspect = (3.0f/2.0f), float near = 1.0f, float far = 500.0f);
 		//获取相机变换矩阵
 		void GetViewMatrix(KZMath::KZMatrix44& matrix);
 		//获取透视投影矩阵
-		void GetPerspectiveMatrix(KZMath::KZMatrix44& matrix);
+		void GetPerspectiveMatrix(KZMath::KZMatrix44& matrix, bool skybox = false);
 		//获取正交矩阵
 		void GetOrthogonalMatrix(KZMath::KZMatrix44& matrix);
 		//处理键盘输入

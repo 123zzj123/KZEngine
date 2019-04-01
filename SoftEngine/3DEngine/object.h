@@ -10,6 +10,12 @@ namespace KZEngine {
 	class KZObject
 	{
 	public:
+		KZObject() = default;
+		//从obj文件中读取数据，暂时不读取材质文件
+		KZObject(const char* file_name, 
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO, 
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>());
 		//物体通过矩阵从模型坐标系转世界坐标系
 		void TransformModelToWorldMatrix();
 		//物体通过数学公式从模型坐标系转世界坐标系
@@ -32,6 +38,8 @@ namespace KZEngine {
 		void Transform(const KZMath::KZMatrix44& matrix);
 		//更新mesh
 		virtual void UpdateMesh() {};
+		//从obj文件读取模型数据
+
 	public:
 		//物体id
 		int32_t id_ = -1;
@@ -68,7 +76,10 @@ namespace KZEngine {
 	class KZCube final:public KZObject 
 	{
 	public:
-		KZCube(float width, float length, float height, bool light_cube, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat, const KZMath::KZVector4D<float>& scale);
+		KZCube(float width, float length, float height, bool light_cube, 
+			const KZMath::KZVector4D<float>& world_pos, 
+			const KZMath::KZQuat& quat, 
+			const KZMath::KZVector4D<float>& scale);
 	};
 
 	class KZCylinder final : public KZObject
@@ -93,6 +104,12 @@ namespace KZEngine {
 			const KZMath::KZVector4D<float>& world_pos,
 			const KZMath::KZQuat& quat,
 			const KZMath::KZVector4D<float>& scale);
+	};
+
+	class KZSkyBox final : public KZObject
+	{
+	public:
+		KZSkyBox();
 	};
 }
 

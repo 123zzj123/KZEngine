@@ -67,7 +67,11 @@ namespace KZEngine {
 		//设置fps
 		void SetGameFps();
 		//从文件中加载
-		void LoadFromFile();
+		void LoadFromFile(const char* file_name, int32_t pass_id = 0, float alpha = 1.0f,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO,
+			const KZMath::KZVector4D<float>& scale = KZMath::KZVector4D<float>(1, 1, 1),
+			string shadow_map = "");
 		//创建cube
 		void CreateCube(float width = 1.0f, float length = 1.0f, float height = 1.0f,
 			bool light_cube = false,
@@ -118,6 +122,17 @@ namespace KZEngine {
 			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(), 
 			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO
 			);
+		//创建四叉树地形
+		void Create_QuadTerrain(float width, float height, float vscale,
+			const char* height_map_file_name, const char* texture_map_file_name,
+			const KZEngine::Color& ini_color,
+			int32_t pass_id = -1,
+			bool is_light = false,
+			float alpha = 1.0f,
+			bool is_static = true,
+			const KZMath::KZVector4D<float>& world_pos = KZMath::KZVector4D<float>(),
+			const KZMath::KZQuat& quat = KZMath::KZQuat::ZERO
+		);
 		//改变光状态
 		void ChangeLight(uint32_t light_index);
 		//设置计算阴影的方式
@@ -159,6 +174,7 @@ namespace KZEngine {
 				break;
 			}
 		}
+		void AddSkyBox(const char* front_img, const char* back_img, const char* left_img, const char* right_img, const char* top_img, const char* bottom_img);
 	public:
 		//主摄像机
 		KZCamera* main_camera_;

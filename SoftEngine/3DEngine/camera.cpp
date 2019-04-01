@@ -55,15 +55,33 @@ void KZCamera::GetOrthogonalMatrix(KZMath::KZMatrix44& matrix) {
 }
 
 //获取透视投影矩阵
-void KZCamera::GetPerspectiveMatrix(KZMath::KZMatrix44& matrix) {
-	matrix.Zero();
-	matrix.m00_ = - 2 * near_clip_z_ / (right_ - left_);
-	matrix.m02_ = (right_ + left_) / (right_ - left_);
-	matrix.m11_ = - 2 * near_clip_z_ / (top_ - bottom_);
-	matrix.m12_ = (top_ + bottom_) / (top_ - bottom_);
-	matrix.m22_ = - (-far_clip_z_ - near_clip_z_) / (-far_clip_z_ + near_clip_z_);
-	matrix.m23_ = -2 * far_clip_z_ * near_clip_z_ / (-far_clip_z_ + near_clip_z_);
-	matrix.m32_ = -1;
+void KZCamera::GetPerspectiveMatrix(KZMath::KZMatrix44& matrix, bool skybox) {
+	if (skybox) {
+		float near_clip_z = -0.01f;
+		float top = near_clip_z * tan(KZMath::AngleToRadian(fov_ * 0.5f));
+		float bottom = -top;
+		float right = top * aspect_ratio_;
+		float left = -right;
+		matrix.Zero();
+		matrix.m00_ = -2 * near_clip_z / (right - left);
+		matrix.m02_ = (right + left) / (right - left);
+		matrix.m11_ = -2 * near_clip_z / (top - bottom);
+		matrix.m12_ = (top + bottom) / (top - bottom);
+		matrix.m22_ = -(-far_clip_z_ - near_clip_z) / (-far_clip_z_ + near_clip_z);
+		matrix.m23_ = -2 * far_clip_z_ * near_clip_z / (-far_clip_z_ + near_clip_z);
+		matrix.m32_ = -1;
+	}
+	else
+	{
+		matrix.Zero();
+		matrix.m00_ = -2 * near_clip_z_ / (right_ - left_);
+		matrix.m02_ = (right_ + left_) / (right_ - left_);
+		matrix.m11_ = -2 * near_clip_z_ / (top_ - bottom_);
+		matrix.m12_ = (top_ + bottom_) / (top_ - bottom_);
+		matrix.m22_ = -(-far_clip_z_ - near_clip_z_) / (-far_clip_z_ + near_clip_z_);
+		matrix.m23_ = -2 * far_clip_z_ * near_clip_z_ / (-far_clip_z_ + near_clip_z_);
+		matrix.m32_ = -1;
+	}
 	return;
 }
 

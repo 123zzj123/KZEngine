@@ -192,7 +192,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	KZEngine::KZPipeLine* p_instance = KZEngine::KZPipeLine::GetInstance();
 	p_instance->SetCalculateShadow(KZEngine::CalCulateShadow::NONE);
-	p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(0, 0, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
+	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(0, 0, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(4, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//p_instance->CreateCube(1.0f, 1.0f, 1.0f, false, -1, false, 1.0f, KZMath::KZVector4D<float>(-2, 2, -8), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1), "shadow_texture/cube_shadow.png");
 	//shadow_texture/cube_shadow.png
@@ -202,9 +202,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	//p_instance->CreateSphere(0.8f, 12, 16, KZEngine::Color(255, 255, 0), -1, false, 0.2f, KZMath::KZVector4D<float>(-2, 0, -5));
 	//p_instance->CreateCylinder(0.6f, 0.6f, 1.0f, 4, 8, KZEngine::Color(255, 255, 0), -1, false, 1.0f, KZMath::KZVector4D<float>(2.0f, -1.0f, -5), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(1, 1, 1),"shadow_texture/sphere_shadow.png");
 	//shadow_texture/sphere_shadow.png
-	//p_instance->Create_Terrain(12, 12, 4, "height_map_texture/cs1.bmp", "terrain_map_texture/terrain3.jpg", KZEngine::Color(255, 255, 255), -1, false, 1.0f, true, KZMath::KZVector4D<float>(0, -4, -10), KZMath::KZQuat::ZERO);
+	//p_instance->Create_Terrain(24, 24, 4, "height_map_texture/river.png", "", KZEngine::Color(255, 255, 255), -1, false, 1.0f, true, KZMath::KZVector4D<float>(0, -2, -10), KZMath::KZQuat::ZERO);
 	//terrain_map_texture/terrain1.jpg
+	//p_instance->Create_QuadTerrain(24, 24, 4, "height_map_texture/river.png", "", KZEngine::Color(255, 255, 255), -1, false, 1.0f, true, KZMath::KZVector4D<float>(0, -2, -10), KZMath::KZQuat::ZERO);
 	//p_instance->CreatePyramid();
+	//p_instance->LoadFromFile("obj_folder/Bird_Leg.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, -70, -200));
+	p_instance->LoadFromFile("obj_folder/Ring.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, 0, -200), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(0.05, 0.05, 0.05));
+	//KZMath::KZQuat quat;
+	//quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 1, 1), 45);
+	//p_instance->LoadFromFile("obj_folder/Brick.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, 0, -200), quat, KZMath::KZVector4D<float>(0.1, 0.1, 0.1));
+	//p_instance->LoadFromFile("obj_folder/GoalPosts.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, -100, -250), KZMath::KZQuat::ZERO, KZMath::KZVector4D<float>(0.1, 0.1, 0.1));
+	//p_instance->LoadFromFile("obj_folder/Pickup.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, 0, -300));
+	//KZMath::KZQuat quat;
+	//quat.SetFromVector3DTheta(KZMath::KZVector3D(0, 1, 0), 45);
+	//p_instance->LoadFromFile("obj_folder/jeep.obj", 0, 1.0f, KZMath::KZVector4D<float>(0, 0, -30), quat);
+	//p_instance->AddSkyBox("skybox/front.jpg", "skybox/back.jpg", "skybox/left.jpg", "skybox/right.jpg", "skybox/top.jpg", "skybox/bottom.jpg");
 	p_instance->SetSceneManage(KZEngine::SceneManage::NONE);
 	if (!IniWindowClass(hInstance)) {
 		return false;

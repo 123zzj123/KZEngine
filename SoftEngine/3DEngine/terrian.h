@@ -7,7 +7,7 @@
 #include <queue>
 
 namespace KZEngine {
-	const float kFactor = 1.0f;
+	const float kFactor = 50.0f;
 
 	class KZTerrian : public KZObject
 	{
@@ -48,6 +48,7 @@ namespace KZEngine {
 		queue<KZQuadTerrianNode*> process_queue_[2];
 		bool* node_state_table_;
 		uint32_t max_level_;
+		KZMath::KZQuat quat_;
 	public:
 		KZQuadTerrian(float width, float height, float vscale, const char* height_map_file_name, const char* texture_map_file_name,
 			const KZEngine::Color& ini_color, const KZMath::KZVector4D<float>& world_pos, const KZMath::KZQuat& quat);
@@ -55,11 +56,12 @@ namespace KZEngine {
 		void UpdateMesh() override;
 	protected:
 		bool EvalNeighbor(KZQuadTerrianNode* node);
-		bool EvalTerrianNode(KZQuadTerrianNode* node);
+		bool EvalTerrianNode(KZQuadTerrianNode* node, bool& inside);
 		void BuildQuadTree(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);
 		void IniQuadTreeRough(KZQuadTerrianNode* root, uint32_t level, uint32_t diff_num);
 		void GetMaxLevel(uint32_t img_len);
 		void AddNodeToMesh(KZQuadTerrianNode* node);
+		bool CheckHeightMap();
 	};
 }
 
